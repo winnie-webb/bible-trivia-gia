@@ -17,6 +17,7 @@ export default function RoomPage() {
   const [copied, setCopied] = useState(false)
   const [linkCopied, setLinkCopied] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [initialLoading, setInitialLoading] = useState(true)
 
   const isOwner = room?.owner_id === playerId
 
@@ -52,19 +53,25 @@ export default function RoomPage() {
   }, [room?.id])
 
   const loadRoom = async () => {
+    console.log('Loading room with code:', code)
     const { data, error } = await supabase
       .from('rooms')
       .select('*')
       .eq('code', code)
       .single()
 
+    console.log('Room data:', data)
+    console.log('Room error:', error)
+
     if (error || !data) {
-      alert('Room not found')
+      console.error('Failed to load room:', error)
+      alert(`Room not found: ${error?.message || 'Unknown error'}`)
       router.push('/')
       return
     }
 
     setRoom(data)
+    setInitialLoading(false)
   }
 
   const loadPlayers = async () => {
@@ -150,12 +157,28 @@ export default function RoomPage() {
     setTimeout(() => setLinkCopied(false), 2000)
   }
 
-  if (!room) return null
+  // Loading state
+  if (initialLoading) {
+    console.log('Showing initial loading state')
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 flex items-center justify-center">
+        <div className="text-white text-xl">Loading room...</div>
+      </div>
+    )
+  }
 
+  if (!room) {
+    console.log('No room found, returning null')
+    return null
+  }
+
+  console.log('Room status:', room.status)
   if (room.status === 'active' || room.status === 'finished') {
+    console.log('Showing GameScreen')
     return <GameScreen room={room} playerId={playerId} />
   }
 
+  console.log('Showing lobby')
   const allReady = players.every(p => p.ready || p.player_id === room.owner_id)
   const canStart = isOwner && players.length >= 2 && allReady
 

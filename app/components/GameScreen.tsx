@@ -94,15 +94,21 @@ export default function GameScreen({ room, playerId }: Props) {
   }, [hasAnswered, showResults, currentQuestion])
 
   const loadGameState = async () => {
-    const { data } = await supabase
+    console.log('Loading game state for room:', room.id)
+    const { data, error } = await supabase
       .from('game_state')
       .select('*')
       .eq('room_id', room.id)
       .single()
 
+    console.log('Game state data:', data)
+    console.log('Game state error:', error)
+
     if (data) {
       setGameState(data)
       setCurrentQuestion(data.questions[room.current_question])
+    } else {
+      console.error('No game state found - game may not have started properly')
     }
   }
 
@@ -316,7 +322,25 @@ export default function GameScreen({ room, playerId }: Props) {
     )
   }
 
-  if (!currentQuestion) return null
+  if (!currentQuestion) {
+    console.log('No current question - showing error message')
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 flex items-center justify-center p-4">
+        <div className="bg-white/10 backdrop-blur-sm rounded-lg p-8 max-w-md w-full text-center">
+          <h2 className="text-2xl font-bold text-white mb-4">Game Not Ready</h2>
+          <p className="text-gray-300 mb-6">
+            The game hasn't been properly initialized. Please return to the lobby and start again.
+          </p>
+          <button
+            onClick={() => window.location.href = '/'}
+            className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-lg transition"
+          >
+            Back to Home
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 p-4">
