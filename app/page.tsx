@@ -145,7 +145,7 @@ export default function Home() {
         {/* Header */}
         <div className="text-center">
           <BookOpen className="mx-auto h-16 w-16 text-yellow-400" />
-          <h1 className="mt-4 text-4xl font-bold text-white">Bible Trivia</h1>
+          <h1 className="mt-4 text-4xl font-bold text-white">Gia Trivia</h1>
           <p className="mt-2 text-gray-300">Test your biblical knowledge with friends!</p>
           
           {hasProfile && (

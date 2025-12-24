@@ -123,13 +123,21 @@ export default function GameScreen({ room, playerId }: Props) {
   }
 
   const checkAllAnswered = async () => {
+    // Get fresh player count to avoid race conditions
+    const { data: playersData } = await supabase
+      .from('room_players')
+      .select('*')
+      .eq('room_id', room.id)
+
     const { data } = await supabase
       .from('player_answers')
       .select('*')
       .eq('room_id', room.id)
       .eq('question_number', room.current_question)
 
-    if (data && data.length === players.length) {
+    console.log('Checking answers:', data?.length, 'vs players:', playersData?.length)
+
+    if (data && playersData && data.length === playersData.length) {
       showQuestionResults(data)
     }
   }
@@ -149,20 +157,37 @@ export default function GameScreen({ room, playerId }: Props) {
       }
     }
 
+    // Reload players to get updated scores
+    await loadPlayers()
+
     // Move to next question after 5 seconds
+    // Use a flag to ensure only one player advances the game
     setTimeout(async () => {
-      if (room.owner_id === playerId) {
-        const nextQuestion = room.current_question + 1
+      const nextQuestion = room.current_question + 1
+      
+      // Check current room state to avoid double updates
+      const { data: currentRoom } = await supabase
+        .from('rooms')
+        .select('current_question, status')
+        .eq('id', room.id)
+        .single()
+
+      console.log('Attempting to advance question:', currentRoom?.current_question, 'vs', room.current_question)
+
+      // Only advance if we're still on the same question (prevents double advancement)
+      if (currentRoom && currentRoom.current_question === room.current_question) {
         if (nextQuestion >= room.question_count) {
           await supabase
             .from('rooms')
             .update({ status: 'finished' })
             .eq('id', room.id)
+            .eq('current_question', room.current_question)
         } else {
           await supabase
             .from('rooms')
             .update({ current_question: nextQuestion })
             .eq('id', room.id)
+            .eq('current_question', room.current_question)
         }
       }
     }, 5000)
