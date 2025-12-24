@@ -32,6 +32,7 @@ export default function GameScreen({ room, playerId }: Props) {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
   const [hasAnswered, setHasAnswered] = useState(false)
   const [timeLeft, setTimeLeft] = useState(room.time_limit)
+  const [localRoom, setLocalRoom] = useState<Room>(room)
   const [showResults, setShowResults] = useState(false)
   const [questionResults, setQuestionResults] = useState<any>(null)
   const [usedPowerUps, setUsedPowerUps] = useState<Set<string>>(new Set())
@@ -43,28 +44,49 @@ export default function GameScreen({ room, playerId }: Props) {
   const [newAchievements, setNewAchievements] = useState<string[]>([])
 
   useEffect(() => {
+    setLocalRoom(room)
+  }, [room])
+
+  useEffect(() => {
+    if (!localRoom) return
+    
     loadGameState()
     loadPlayers()
 
     const channel = supabase
-      .channel(`game:${room.id}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'rooms', filter: `id=eq.${room.id}` }, (payload) => {
+      .channel(`game:${localRoom.id}:${Date.now()}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'rooms', filter: `id=eq.${localRoom.id}` }, (payload) => {
         const updatedRoom = payload.new as Room
-        if (updatedRoom.current_question !== room.current_question) {
+        console.log('Room updated:', updatedRoom.current_question, 'previous:', localRoom.current_question)
+        setLocalRoom(updatedRoom)
+        if (updatedRoom.current_question !== localRoom.current_question) {
+          console.log('Question changed, resetting state')
           setHasAnswered(false)
           setSelectedAnswer(null)
           setShowResults(false)
-          setTimeLeft(room.time_limit)
+          setTimeLeft(updatedRoom.time_limit)
           setUsedPowerUps(new Set())
           setHiddenOptions(new Set())
           setDoublePointsActive(false)
-          loadGameState()
+          // Load new question
+          const loadNewQuestion = async () => {
+            const { data } = await supabase
+              .from('game_state')
+              .select('*')
+              .eq('room_id', updatedRoom.id)
+              .single()
+            if (data) {
+              setGameState(data)
+              setCurrentQuestion(data.questions[updatedRoom.current_question])
+            }
+          }
+          loadNewQuestion()
         }
       })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'room_players', filter: `room_id=eq.${room.id}` }, () => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'room_players', filter: `room_id=eq.${localRoom.id}` }, () => {
         loadPlayers()
       })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'player_answers', filter: `room_id=eq.${room.id}` }, () => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'player_answers', filter: `room_id=eq.${localRoom.id}` }, () => {
         checkAllAnswered()
       })
       .subscribe()
@@ -72,7 +94,7 @@ export default function GameScreen({ room, playerId }: Props) {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [room.current_question])
+  }, [localRoom?.id])
 
   useEffect(() => {
     if (hasAnswered || showResults || !currentQuestion) return
@@ -94,11 +116,11 @@ export default function GameScreen({ room, playerId }: Props) {
   }, [hasAnswered, showResults, currentQuestion])
 
   const loadGameState = async () => {
-    console.log('Loading game state for room:', room.id)
+    console.log('Loading game state for room:', localRoom.id)
     const { data, error } = await supabase
       .from('game_state')
       .select('*')
-      .eq('room_id', room.id)
+      .eq('room_id', localRoom.id)
       .single()
 
     console.log('Game state data:', data)
@@ -106,7 +128,7 @@ export default function GameScreen({ room, playerId }: Props) {
 
     if (data) {
       setGameState(data)
-      setCurrentQuestion(data.questions[room.current_question])
+      setCurrentQuestion(data.questions[localRoom.current_question])
     } else {
       console.error('No game state found - game may not have started properly')
     }
@@ -116,7 +138,7 @@ export default function GameScreen({ room, playerId }: Props) {
     const { data } = await supabase
       .from('room_players')
       .select('*')
-      .eq('room_id', room.id)
+      .eq('room_id', localRoom.id)
       .order('score', { ascending: false })
 
     if (data) setPlayers(data)
@@ -127,13 +149,13 @@ export default function GameScreen({ room, playerId }: Props) {
     const { data: playersData } = await supabase
       .from('room_players')
       .select('*')
-      .eq('room_id', room.id)
+      .eq('room_id', localRoom.id)
 
     const { data } = await supabase
       .from('player_answers')
       .select('*')
-      .eq('room_id', room.id)
-      .eq('question_number', room.current_question)
+      .eq('room_id', localRoom.id)
+      .eq('question_number', localRoom.current_question)
 
     console.log('Checking answers:', data?.length, 'vs players:', playersData?.length)
 
@@ -146,11 +168,16 @@ export default function GameScreen({ room, playerId }: Props) {
     setQuestionResults(answers)
     setShowResults(true)
 
+    // Capture current values to avoid stale closure
+    const roomId = localRoom.id
+    const currentQuestionNum = localRoom.current_question
+    const questionCount = localRoom.question_count
+
     // Update player scores
     for (const answer of answers) {
       if (answer.is_correct) {
         await supabase.rpc('increment_score', {
-          p_room_id: room.id,
+          p_room_id: roomId,
           p_player_id: answer.player_id,
           p_points: answer.points_earned
         })
@@ -160,35 +187,42 @@ export default function GameScreen({ room, playerId }: Props) {
     // Reload players to get updated scores
     await loadPlayers()
 
+    console.log('Showing results for question', currentQuestionNum, 'will advance in 5 seconds')
+
     // Move to next question after 5 seconds
-    // Use a flag to ensure only one player advances the game
     setTimeout(async () => {
-      const nextQuestion = room.current_question + 1
+      const nextQuestion = currentQuestionNum + 1
       
       // Check current room state to avoid double updates
       const { data: currentRoom } = await supabase
         .from('rooms')
         .select('current_question, status')
-        .eq('id', room.id)
+        .eq('id', roomId)
         .single()
 
-      console.log('Attempting to advance question:', currentRoom?.current_question, 'vs', room.current_question)
+      console.log('Attempting to advance question. DB shows:', currentRoom?.current_question, 'captured was:', currentQuestionNum, 'next will be:', nextQuestion)
 
       // Only advance if we're still on the same question (prevents double advancement)
-      if (currentRoom && currentRoom.current_question === room.current_question) {
-        if (nextQuestion >= room.question_count) {
-          await supabase
+      if (currentRoom && currentRoom.current_question === currentQuestionNum) {
+        if (nextQuestion >= questionCount) {
+          console.log('Game finished, updating status')
+          const { error } = await supabase
             .from('rooms')
             .update({ status: 'finished' })
-            .eq('id', room.id)
-            .eq('current_question', room.current_question)
+            .eq('id', roomId)
+            .eq('current_question', currentQuestionNum)
+          console.log('Finish update error:', error)
         } else {
-          await supabase
+          console.log('Advancing to question', nextQuestion)
+          const { error } = await supabase
             .from('rooms')
             .update({ current_question: nextQuestion })
-            .eq('id', room.id)
-            .eq('current_question', room.current_question)
+            .eq('id', roomId)
+            .eq('current_question', currentQuestionNum)
+          console.log('Advance update error:', error)
         }
+      } else {
+        console.log('Question already advanced by another player')
       }
     }, 5000)
   }
@@ -200,7 +234,7 @@ export default function GameScreen({ room, playerId }: Props) {
     setSelectedAnswer(answerIndex)
 
     const isCorrect = answerIndex === currentQuestion.correct_index
-    const timeBonus = Math.floor((timeLeft / room.time_limit) * 100)
+    const timeBonus = Math.floor((timeLeft / localRoom.time_limit) * 100)
     let points = isCorrect ? 1000 + timeBonus : 0
     
     if (doublePointsActive && isCorrect) {
@@ -216,7 +250,7 @@ export default function GameScreen({ room, playerId }: Props) {
       updateStreak(false)
     }
 
-    const answerTime = room.time_limit - timeLeft
+    const answerTime = localRoom.time_limit - timeLeft
     if (isCorrect && (fastestAnswer === null || answerTime < fastestAnswer)) {
       setFastestAnswer(answerTime)
     }
@@ -228,8 +262,8 @@ export default function GameScreen({ room, playerId }: Props) {
     }
 
     await supabase.from('player_answers').insert({
-      room_id: room.id,
-      question_number: room.current_question,
+      room_id: localRoom.id,
+      question_number: localRoom.current_question,
       player_id: playerId,
       answer_index: answerIndex,
       time_taken: timeTaken,
@@ -264,7 +298,7 @@ export default function GameScreen({ room, playerId }: Props) {
     }
   }
 
-  if (room.status === 'finished') {
+  if (localRoom.status === 'finished') {
     // Record game completion
     const currentPlayer = players.find(p => p.player_id === playerId)
     const isWinner = currentPlayer && currentPlayer.score === Math.max(...players.map(p => p.score))
@@ -374,7 +408,7 @@ export default function GameScreen({ room, playerId }: Props) {
         <div className="flex justify-between items-center mb-6">
           <div className="bg-white/10 backdrop-blur-sm rounded-lg px-6 py-3">
             <span className="text-white font-semibold">
-              Question {room.current_question + 1} / {room.question_count}
+              Question {localRoom.current_question + 1} / {localRoom.question_count}
             </span>
           </div>
 
@@ -436,7 +470,7 @@ export default function GameScreen({ room, playerId }: Props) {
                       key={index}
                       onClick={() => {
                         if (!hasAnswered) {
-                          submitAnswer(index, room.time_limit - timeLeft)
+                          submitAnswer(index, localRoom.time_limit - timeLeft)
                         }
                       }}
                       disabled={hasAnswered}
