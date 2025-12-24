@@ -237,7 +237,7 @@ export default function Home() {
           </div>
 
           <button
-            onClick={joinRoom}
+            onClick={() => joinRoom()}
             disabled={loading}
             className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
           >

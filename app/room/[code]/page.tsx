@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase, Room, RoomPlayer } from '@/lib/supabase'
 import { Users, Settings, Play, Copy, Check } from 'lucide-react'
-import GameScreen from '@/components/GameScreen'
+import GameScreen from '@/app/components/GameScreen'
 
 export default function RoomPage() {
   const params = useParams()
