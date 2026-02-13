@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { getProfile, initializeProfile } from '@/lib/localStorage'
 import { Heart, Users, Trophy, User, Sparkles } from 'lucide-react'
+import PremiumLoveLetter from '@/app/components/PremiumLoveLetter'
 
 export const dynamic = 'force-dynamic'
 
@@ -274,12 +275,14 @@ function HomeContent() {
 
 export default function Home() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-br from-pink-200 via-rose-300 to-red-200 flex items-center justify-center">
-        <div className="text-rose-600 text-xl font-semibold">Loading...</div>
-      </div>
-    }>
-      <HomeContent />
-    </Suspense>
+    <PremiumLoveLetter>
+      <Suspense fallback={
+        <div className="min-h-screen bg-gradient-to-br from-pink-200 via-rose-300 to-red-200 flex items-center justify-center">
+          <div className="text-rose-600 text-xl font-semibold">Loading...</div>
+        </div>
+      }>
+        <HomeContent />
+      </Suspense>
+    </PremiumLoveLetter>
   )
 }
