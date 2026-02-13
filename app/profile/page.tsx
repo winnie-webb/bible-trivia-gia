@@ -6,6 +6,8 @@ import { getProfile, ACHIEVEMENTS, getUnlockedAchievements, getLockedAchievement
 import { Trophy, Target, Zap, Award, TrendingUp, Home, Lock } from 'lucide-react'
 import { motion } from 'framer-motion'
 
+export const dynamic = 'force-dynamic'
+
 export default function ProfilePage() {
   const router = useRouter()
   const [profile, setProfile] = useState<any>(null)

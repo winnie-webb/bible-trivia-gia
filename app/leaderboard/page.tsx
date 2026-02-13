@@ -6,6 +6,8 @@ import { getProfile } from '@/lib/localStorage'
 import { Trophy, Home, Medal, Award, Zap } from 'lucide-react'
 import { motion } from 'framer-motion'
 
+export const dynamic = 'force-dynamic'
+
 type LeaderboardEntry = {
   rank: number
   username: string

@@ -6,6 +6,8 @@ import { getProfile } from '@/lib/localStorage'
 import { Calendar, Trophy, Home, Play } from 'lucide-react'
 import { motion } from 'framer-motion'
 
+export const dynamic = 'force-dynamic'
+
 type DailyChallenge = {
   date: string
   difficulty: string

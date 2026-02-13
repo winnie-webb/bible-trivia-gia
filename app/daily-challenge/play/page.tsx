@@ -6,6 +6,9 @@ import { getProfile, updateStreak, checkAndAwardAchievements, recordGameComplete
 import { Clock, Home } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import AchievementToast from '@/app/components/AchievementToast'
+
+export const dynamic = 'force-dynamic'
+
 type Question = {
   question: string
   options: string[]

@@ -1,12 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { getProfile, initializeProfile } from '@/lib/localStorage'
 import { Heart, Users, Trophy, User, Sparkles } from 'lucide-react'
 
-export default function Home() {
+export const dynamic = 'force-dynamic'
+
+function HomeContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [playerName, setPlayerName] = useState('')
@@ -267,5 +269,17 @@ export default function Home() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-pink-200 via-rose-300 to-red-200 flex items-center justify-center">
+        <div className="text-rose-600 text-xl font-semibold">Loading...</div>
+      </div>
+    }>
+      <HomeContent />
+    </Suspense>
   )
 }

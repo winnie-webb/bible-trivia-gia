@@ -6,6 +6,8 @@ import { supabase, Room, RoomPlayer } from '@/lib/supabase'
 import { Users, Settings, Play, Copy, Check, Heart, Sparkles } from 'lucide-react'
 import GameScreen from '@/app/components/GameScreen'
 
+export const dynamic = 'force-dynamic'
+
 export default function RoomPage() {
   const params = useParams()
   const router = useRouter()
