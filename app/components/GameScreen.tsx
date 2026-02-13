@@ -95,8 +95,8 @@ export default function GameScreen({ room: initialRoom, playerId }: Props) {
       // Refresh scoreboard
       loadPlayers()
 
-      // Owner: check if all players answered → advance
-      if (hasAnsweredRef.current && !isAdvancingRef.current && room.owner_id === playerId) {
+      // Owner: check if all players answered → advance (skip if already in transition)
+      if (hasAnsweredRef.current && !isAdvancingRef.current && !room.showing_results && room.owner_id === playerId) {
         const allDone = await areAllAnswered(room.current_question)
         if (allDone) {
           doAdvance(room)
@@ -106,6 +106,25 @@ export default function GameScreen({ room: initialRoom, playerId }: Props) {
 
     return () => clearInterval(poll)
   }, [])
+
+  // ── Between-question countdown (all clients, driven by DB timestamp) ──
+  useEffect(() => {
+    if (!localRoom.showing_results || !localRoom.question_start_time) {
+      setNextQuestionIn(null)
+      return
+    }
+
+    const target = new Date(localRoom.question_start_time).getTime()
+
+    const calcCountdown = () => {
+      const left = Math.max(0, Math.ceil((target - Date.now()) / 1000))
+      setNextQuestionIn(left > 0 ? left : null)
+    }
+
+    calcCountdown()
+    const tick = setInterval(calcCountdown, 1000)
+    return () => clearInterval(tick)
+  }, [localRoom.showing_results, localRoom.question_start_time])
 
   // ── Timer: 1-second countdown ──
   useEffect(() => {
@@ -315,12 +334,15 @@ export default function GameScreen({ room: initialRoom, playerId }: Props) {
 
     await loadPlayers()
 
-    // 5-second countdown between questions
-    for (let i = 5; i > 0; i--) {
-      setNextQuestionIn(i)
-      await new Promise(r => setTimeout(r, 1000))
-    }
-    setNextQuestionIn(null)
+    // Write transition state to DB so ALL clients see the countdown
+    const nextQuestionAt = new Date(Date.now() + 5000)
+    await supabase.from('rooms').update({
+      showing_results: true,
+      question_start_time: nextQuestionAt.toISOString(),
+    }).eq('id', roomId)
+
+    // Wait 5 seconds
+    await new Promise(r => setTimeout(r, 5000))
 
     // Move to next question or finish
     const next = room.current_question + 1
@@ -328,7 +350,7 @@ export default function GameScreen({ room: initialRoom, playerId }: Props) {
       console.log('Game finished!')
       const { error } = await supabase
         .from('rooms')
-        .update({ status: 'finished' })
+        .update({ status: 'finished', showing_results: false })
         .eq('id', roomId)
       if (error) console.error('Finish game error:', error)
     } else {
@@ -339,6 +361,7 @@ export default function GameScreen({ room: initialRoom, playerId }: Props) {
         .from('rooms')
         .update({
           current_question: next,
+          showing_results: false,
           question_start_time: start.toISOString(),
           question_end_time: end.toISOString(),
         })
@@ -492,13 +515,15 @@ export default function GameScreen({ room: initialRoom, playerId }: Props) {
           </div>
         </div>
 
-        {/* Between-question countdown */}
-        {hasAnswered && timeLeft === 0 && (
+        {/* Status message after answering */}
+        {hasAnswered && (
           <div className="text-center mb-4">
             <span className="bg-white/80 backdrop-blur-sm rounded-xl px-6 py-2 text-rose-700 font-bold border-2 border-pink-300 shadow-lg inline-block">
               {nextQuestionIn
-                ? `Next question in ${nextQuestionIn}s...`
-                : 'Waiting for next question...'}
+                ? localRoom.current_question + 1 >= localRoom.question_count
+                  ? `Game ending in ${nextQuestionIn}s...`
+                  : `Next question in ${nextQuestionIn}s...`
+                : 'Waiting for other players...'}
             </span>
           </div>
         )}
