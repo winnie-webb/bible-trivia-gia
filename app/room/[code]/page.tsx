@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase, Room, RoomPlayer } from '@/lib/supabase'
-import { Users, Settings, Play, Copy, Check } from 'lucide-react'
+import { Users, Settings, Play, Copy, Check, Heart, Sparkles } from 'lucide-react'
 import GameScreen from '@/app/components/GameScreen'
 
 export default function RoomPage() {
@@ -131,10 +131,20 @@ export default function RoomPage() {
         answers: {}
       })
 
-      // Update room status
+      // Calculate question timing
+      const questionStartTime = new Date()
+      const questionEndTime = new Date(questionStartTime.getTime() + room.time_limit * 1000)
+
+      // Update room status with timing
       await supabase
         .from('rooms')
-        .update({ status: 'active', current_question: 0 })
+        .update({ 
+          status: 'active', 
+          current_question: 0,
+          showing_results: false,
+          question_start_time: questionStartTime.toISOString(),
+          question_end_time: questionEndTime.toISOString()
+        })
         .eq('id', room.id)
     } catch (error) {
       console.error('Error starting game:', error)
@@ -161,8 +171,11 @@ export default function RoomPage() {
   if (initialLoading) {
     console.log('Showing initial loading state')
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 flex items-center justify-center">
-        <div className="text-white text-xl">Loading room...</div>
+      <div className="min-h-screen bg-gradient-to-br from-pink-200 via-rose-300 to-red-200 flex items-center justify-center">
+        <div className="text-rose-700 text-xl font-semibold flex items-center gap-2">
+          <Heart className="w-6 h-6 animate-pulse fill-rose-600" />
+          Loading room...
+        </div>
       </div>
     )
   }
@@ -183,48 +196,59 @@ export default function RoomPage() {
   const canStart = isOwner && players.length >= 2 && allReady
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 p-4">
-      <div className="max-w-4xl mx-auto py-8">
+    <div className="min-h-screen bg-gradient-to-br from-pink-200 via-rose-300 to-red-200 p-4 relative overflow-hidden">
+      {/* Floating hearts decoration */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-10 left-10 text-5xl opacity-15 animate-pulse">💕</div>
+        <div className="absolute top-32 right-20 text-3xl opacity-20 animate-bounce">💖</div>
+        <div className="absolute bottom-20 left-1/4 text-4xl opacity-15 animate-pulse">💗</div>
+        <div className="absolute bottom-40 right-1/3 text-3xl opacity-20">💝</div>
+      </div>
+      
+      <div className="max-w-4xl mx-auto py-8 relative z-10">
         {/* Header */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 mb-6">
+        <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 mb-6 border-2 border-pink-300 shadow-xl">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-3xl font-bold text-white">Game Lobby</h1>
+            <div className="flex items-center gap-3">
+              <Heart className="w-8 h-8 text-rose-600 fill-rose-600 animate-pulse" />
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-rose-600 via-pink-600 to-red-600 bg-clip-text text-transparent">Game Lobby 💕</h1>
+            </div>
             <div className="flex gap-2">
               <button
                 onClick={copyCode}
-                className="flex items-center gap-2 bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg text-white transition"
+                className="flex items-center gap-2 bg-gradient-to-r from-rose-400 to-pink-500 hover:from-rose-500 hover:to-pink-600 px-4 py-2 rounded-xl text-white transition shadow-lg transform hover:scale-105 border-2 border-pink-300"
               >
                 {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                 <span className="font-mono font-bold">{code}</span>
               </button>
               <button
                 onClick={copyLink}
-                className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-lg text-white transition"
+                className="flex items-center gap-2 bg-gradient-to-r from-pink-400 to-rose-500 hover:from-pink-500 hover:to-rose-600 px-4 py-2 rounded-xl text-white transition shadow-lg transform hover:scale-105 border-2 border-pink-300"
               >
                 {linkCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                 <span className="hidden sm:inline">Copy Link</span>
               </button>
             </div>
           </div>
-          <p className="text-gray-300">Share the code or link with friends to join!</p>
+          <p className="text-rose-600 font-medium">💌 Share the code or link with friends to join!</p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
           {/* Settings */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
-            <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+          <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 border-2 border-pink-300 shadow-xl">
+            <h2 className="text-xl font-bold text-rose-700 mb-4 flex items-center gap-2">
               <Settings className="w-5 h-5" />
               Game Settings
             </h2>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-gray-300 mb-2">Category</label>
+                <label className="block text-rose-700 mb-2 font-semibold">Category</label>
                 <select
                   value={room.category || 'mixed'}
                   onChange={(e) => updateSettings('category', e.target.value)}
                   disabled={!isOwner}
-                  className="w-full px-4 py-2 bg-white/20 border border-white/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 disabled:opacity-50"
+                  className="w-full px-4 py-2 bg-rose-50 border-2 border-pink-300 rounded-xl text-rose-900 focus:outline-none focus:ring-2 focus:ring-pink-500 disabled:opacity-50 font-medium"
                 >
                   <option value="mixed">📖 Mixed (All Categories)</option>
                   <option value="old_testament">📜 Old Testament</option>
@@ -239,12 +263,12 @@ export default function RoomPage() {
               </div>
 
               <div>
-                <label className="block text-gray-300 mb-2">Difficulty</label>
+                <label className="block text-rose-600 mb-2 font-semibold">Difficulty</label>
                 <select
                   value={room.difficulty}
                   onChange={(e) => updateSettings('difficulty', e.target.value)}
                   disabled={!isOwner}
-                  className="w-full px-4 py-2 bg-white/20 border border-white/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 disabled:opacity-50"
+                  className="w-full px-4 py-2 bg-rose-50 border-2 border-pink-300 rounded-xl text-rose-800 focus:outline-none focus:ring-2 focus:ring-pink-500 disabled:opacity-50 font-medium"
                 >
                   <option value="easy">Easy</option>
                   <option value="medium">Medium</option>
@@ -254,12 +278,12 @@ export default function RoomPage() {
               </div>
 
               <div>
-                <label className="block text-gray-300 mb-2">Number of Questions</label>
+                <label className="block text-rose-600 mb-2 font-semibold">Number of Questions</label>
                 <select
                   value={room.question_count}
                   onChange={(e) => updateSettings('question_count', parseInt(e.target.value))}
                   disabled={!isOwner}
-                  className="w-full px-4 py-2 bg-white/20 border border-white/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 disabled:opacity-50"
+                  className="w-full px-4 py-2 bg-rose-50 border-2 border-pink-300 rounded-xl text-rose-800 focus:outline-none focus:ring-2 focus:ring-pink-500 disabled:opacity-50 font-medium"
                 >
                   <option value="5">5 Questions</option>
                   <option value="10">10 Questions</option>
@@ -269,12 +293,12 @@ export default function RoomPage() {
               </div>
 
               <div>
-                <label className="block text-gray-300 mb-2">Time per Question</label>
+                <label className="block text-rose-600 mb-2 font-semibold">Time per Question</label>
                 <select
                   value={room.time_limit}
                   onChange={(e) => updateSettings('time_limit', parseInt(e.target.value))}
                   disabled={!isOwner}
-                  className="w-full px-4 py-2 bg-white/20 border border-white/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 disabled:opacity-50"
+                  className="w-full px-4 py-2 bg-rose-50 border-2 border-pink-300 rounded-xl text-rose-800 focus:outline-none focus:ring-2 focus:ring-pink-500 disabled:opacity-50 font-medium"
                 >
                   <option value="15">15 seconds</option>
                   <option value="30">30 seconds</option>
@@ -283,17 +307,17 @@ export default function RoomPage() {
               </div>
 
               <div>
-                <label className="flex items-center gap-2 text-gray-300">
+                <label className="flex items-center gap-2 text-rose-700">
                   <input
                     type="checkbox"
                     checked={room.power_ups_enabled || false}
                     onChange={(e) => updateSettings('power_ups_enabled', e.target.checked)}
                     disabled={!isOwner}
-                    className="w-5 h-5 rounded"
+                    className="w-5 h-5 rounded accent-pink-500"
                   />
-                  Enable Power-ups
+                  <span className="font-semibold">Enable Power-ups</span>
                 </label>
-                <p className="text-xs text-gray-400 mt-1 ml-7">
+                <p className="text-xs text-rose-500 mt-1 ml-7">
                   50/50, Extra Time, Double Points
                 </p>
               </div>
@@ -301,30 +325,30 @@ export default function RoomPage() {
           </div>
 
           {/* Players */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
-            <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+          <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 border-2 border-pink-300 shadow-xl">
+            <h2 className="text-xl font-bold text-rose-700 mb-4 flex items-center gap-2">
               <Users className="w-5 h-5" />
-              Players ({players.length})
+              Players ({players.length}) 💕
             </h2>
 
             <div className="space-y-3 mb-6">
               {players.map((player) => (
                 <div
                   key={player.id}
-                  className="flex items-center justify-between bg-white/10 rounded-lg p-3"
+                  className="flex items-center justify-between bg-gradient-to-r from-pink-50 to-rose-50 rounded-xl p-3 border-2 border-pink-200"
                 >
-                  <span className="text-white font-medium">
+                  <span className="text-rose-800 font-semibold">
                     {player.player_name}
                     {player.player_id === room.owner_id && (
-                      <span className="ml-2 text-xs bg-yellow-500 text-gray-900 px-2 py-1 rounded">
-                        HOST
+                      <span className="ml-2 text-xs bg-gradient-to-r from-pink-500 to-rose-500 text-white px-2 py-1 rounded-full">
+                        💕 HOST
                       </span>
                     )}
                   </span>
                   {player.ready || player.player_id === room.owner_id ? (
-                    <span className="text-green-400 text-sm font-semibold">✓ Ready</span>
+                    <span className="text-green-600 text-sm font-bold">✓ Ready</span>
                   ) : (
-                    <span className="text-gray-400 text-sm">Waiting...</span>
+                    <span className="text-rose-400 text-sm">Waiting...</span>
                   )}
                 </div>
               ))}
@@ -335,21 +359,21 @@ export default function RoomPage() {
               <button
                 onClick={startGame}
                 disabled={!canStart || loading}
-                className="w-full bg-green-500 hover:bg-green-600 disabled:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg transition flex items-center justify-center gap-2 disabled:cursor-not-allowed"
+                className="w-full bg-gradient-to-r from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 disabled:from-gray-400 disabled:to-gray-500 text-white font-bold py-3 px-4 rounded-xl transition flex items-center justify-center gap-2 disabled:cursor-not-allowed shadow-lg transform hover:scale-105 border-2 border-green-300"
               >
                 <Play className="w-5 h-5" />
-                {loading ? 'Starting...' : canStart ? 'Start Game' : 'Waiting for players...'}
+                {loading ? '💕 Starting...' : canStart ? '💖 Start Game' : 'Waiting for players...'}
               </button>
             ) : (
               <button
                 onClick={toggleReady}
-                className={`w-full font-bold py-3 px-4 rounded-lg transition ${
+                className={`w-full font-bold py-3 px-4 rounded-xl transition shadow-lg transform hover:scale-105 border-2 ${
                   players.find(p => p.player_id === playerId)?.ready
-                    ? 'bg-gray-500 hover:bg-gray-600'
-                    : 'bg-green-500 hover:bg-green-600'
+                    ? 'bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 border-gray-300'
+                    : 'bg-gradient-to-r from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 border-green-300'
                 } text-white`}
               >
-                {players.find(p => p.player_id === playerId)?.ready ? 'Not Ready' : 'Ready'}
+                {players.find(p => p.player_id === playerId)?.ready ? 'Not Ready' : '💕 Ready'}
               </button>
             )}
           </div>

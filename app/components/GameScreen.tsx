@@ -1,10 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { supabase, Room, RoomPlayer, Question } from '@/lib/supabase'
 import { recordGameComplete, updateStreak, checkAndAwardAchievements } from '@/lib/localStorage'
-import { Trophy, Clock, Scissors, Timer, Zap, SkipForward } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { Scissors, Timer, Zap, Heart } from 'lucide-react'
 import AchievementToast from './AchievementToast'
 
 type Props = {
@@ -25,16 +24,16 @@ const POWER_UPS: PowerUp[] = [
   { key: 'double_points', icon: Zap, name: '2x', description: 'Double points' },
 ]
 
-export default function GameScreen({ room, playerId }: Props) {
-  const [gameState, setGameState] = useState<any>(null)
-  const [players, setPlayers] = useState<RoomPlayer[]>([])
+export default function GameScreen({ room: initialRoom, playerId }: Props) {
+  const roomId = initialRoom.id
+
+  const [localRoom, setLocalRoom] = useState<Room>(initialRoom)
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null)
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
   const [hasAnswered, setHasAnswered] = useState(false)
-  const [timeLeft, setTimeLeft] = useState(room.time_limit)
-  const [localRoom, setLocalRoom] = useState<Room>(room)
-  const [showResults, setShowResults] = useState(false)
-  const [questionResults, setQuestionResults] = useState<any>(null)
+  const [timeLeft, setTimeLeft] = useState(initialRoom.time_limit)
+  const [players, setPlayers] = useState<RoomPlayer[]>([])
+  const [nextQuestionIn, setNextQuestionIn] = useState<number | null>(null)
   const [usedPowerUps, setUsedPowerUps] = useState<Set<string>>(new Set())
   const [hiddenOptions, setHiddenOptions] = useState<Set<number>>(new Set())
   const [doublePointsActive, setDoublePointsActive] = useState(false)
@@ -43,94 +42,126 @@ export default function GameScreen({ room, playerId }: Props) {
   const [fastestAnswer, setFastestAnswer] = useState<number | null>(null)
   const [newAchievements, setNewAchievements] = useState<string[]>([])
 
-  useEffect(() => {
-    setLocalRoom(room)
-  }, [room])
+  // Only 3 refs — the bare minimum needed inside interval callbacks
+  const hasAnsweredRef = useRef(false)
+  const isAdvancingRef = useRef(false)
+  const questionNumRef = useRef(initialRoom.current_question)
 
+  // ── Load initial question on mount ──
   useEffect(() => {
-    if (!localRoom) return
-    
-    loadGameState()
+    loadQuestion(initialRoom.current_question)
     loadPlayers()
+  }, [])
 
-    const channel = supabase
-      .channel(`game:${localRoom.id}:${Date.now()}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'rooms', filter: `id=eq.${localRoom.id}` }, (payload) => {
-        const updatedRoom = payload.new as Room
-        console.log('Room updated:', updatedRoom.current_question, 'previous:', localRoom.current_question)
-        setLocalRoom(updatedRoom)
-        if (updatedRoom.current_question !== localRoom.current_question) {
-          console.log('Question changed, resetting state')
-          setHasAnswered(false)
-          setSelectedAnswer(null)
-          setShowResults(false)
-          setTimeLeft(updatedRoom.time_limit)
-          setUsedPowerUps(new Set())
-          setHiddenOptions(new Set())
-          setDoublePointsActive(false)
-          // Load new question
-          const loadNewQuestion = async () => {
-            const { data } = await supabase
-              .from('game_state')
-              .select('*')
-              .eq('room_id', updatedRoom.id)
-              .single()
-            if (data) {
-              setGameState(data)
-              setCurrentQuestion(data.questions[updatedRoom.current_question])
-            }
-          }
-          loadNewQuestion()
-        }
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'room_players', filter: `room_id=eq.${localRoom.id}` }, () => {
-        loadPlayers()
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'player_answers', filter: `room_id=eq.${localRoom.id}` }, () => {
-        checkAllAnswered()
-      })
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [localRoom?.id])
-
+  // ── Poll room state every 2 seconds ──
   useEffect(() => {
-    if (hasAnswered || showResults || !currentQuestion) return
+    const poll = setInterval(async () => {
+      // Fetch latest room
+      const { data: room, error } = await supabase
+        .from('rooms')
+        .select('*')
+        .eq('id', roomId)
+        .single()
 
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer)
-          if (!hasAnswered) {
-            submitAnswer(-1, 0)
-          }
-          return 0
+      if (error || !room) {
+        console.error('Poll: room fetch error', error)
+        return
+      }
+
+      // Update room state (for rendering)
+      setLocalRoom(room)
+
+      // Game finished?
+      if (room.status === 'finished') {
+        loadPlayers()
+        return
+      }
+
+      // Question changed? → load new question + reset
+      if (room.current_question !== questionNumRef.current) {
+        console.log('Poll: question changed', questionNumRef.current, '→', room.current_question)
+        questionNumRef.current = room.current_question
+        hasAnsweredRef.current = false
+        isAdvancingRef.current = false
+        setHasAnswered(false)
+        setSelectedAnswer(null)
+        setNextQuestionIn(null)
+        setUsedPowerUps(new Set())
+        setHiddenOptions(new Set())
+        setDoublePointsActive(false)
+        await loadQuestion(room.current_question)
+      }
+
+      // Refresh scoreboard
+      loadPlayers()
+
+      // Owner: check if all players answered → advance
+      if (hasAnsweredRef.current && !isAdvancingRef.current && room.owner_id === playerId) {
+        const allDone = await areAllAnswered(room.current_question)
+        if (allDone) {
+          doAdvance(room)
         }
-        return prev - 1
-      })
+      }
+    }, 2000)
+
+    return () => clearInterval(poll)
+  }, [])
+
+  // ── Timer: 1-second countdown ──
+  useEffect(() => {
+    if (!currentQuestion || !localRoom.question_end_time) return
+
+    const endTime = new Date(localRoom.question_end_time).getTime()
+
+    // Run once immediately
+    const calcLeft = () => Math.max(0, Math.ceil((endTime - Date.now()) / 1000))
+    setTimeLeft(calcLeft())
+
+    const tick = setInterval(() => {
+      const left = calcLeft()
+      setTimeLeft(left)
+
+      if (left === 0 && !hasAnsweredRef.current) {
+        console.log('Timer expired → auto-submit')
+        hasAnsweredRef.current = true
+        setHasAnswered(true)
+        doAutoSubmit()
+      }
     }, 1000)
 
-    return () => clearInterval(timer)
-  }, [hasAnswered, showResults, currentQuestion])
+    return () => clearInterval(tick)
+  }, [currentQuestion, localRoom.question_end_time])
 
-  const loadGameState = async () => {
-    console.log('Loading game state for room:', localRoom.id)
+  // ── Data helpers ──
+
+  const loadQuestion = async (questionNumber: number) => {
     const { data, error } = await supabase
       .from('game_state')
       .select('*')
-      .eq('room_id', localRoom.id)
+      .eq('room_id', roomId)
       .single()
 
-    console.log('Game state data:', data)
-    console.log('Game state error:', error)
-
+    if (error) {
+      console.error('loadQuestion error:', error)
+      return
+    }
     if (data) {
-      setGameState(data)
-      setCurrentQuestion(data.questions[localRoom.current_question])
-    } else {
-      console.error('No game state found - game may not have started properly')
+      setCurrentQuestion(data.questions[questionNumber])
+    }
+
+    // Check if this player already answered (page refresh mid-game)
+    const { data: existing } = await supabase
+      .from('player_answers')
+      .select('answer_index')
+      .eq('room_id', roomId)
+      .eq('question_number', questionNumber)
+      .eq('player_id', playerId)
+      .maybeSingle()
+
+    if (existing) {
+      setHasAnswered(true)
+      hasAnsweredRef.current = true
+      setSelectedAnswer(existing.answer_index)
     }
   }
 
@@ -138,110 +169,62 @@ export default function GameScreen({ room, playerId }: Props) {
     const { data } = await supabase
       .from('room_players')
       .select('*')
-      .eq('room_id', localRoom.id)
+      .eq('room_id', roomId)
       .order('score', { ascending: false })
-
     if (data) setPlayers(data)
   }
 
-  const checkAllAnswered = async () => {
-    // Get fresh player count to avoid race conditions
-    const { data: playersData } = await supabase
+  const areAllAnswered = async (questionNumber: number): Promise<boolean> => {
+    const { data: pl } = await supabase
       .from('room_players')
-      .select('*')
-      .eq('room_id', localRoom.id)
+      .select('id')
+      .eq('room_id', roomId)
 
-    const { data } = await supabase
+    const { data: ans } = await supabase
       .from('player_answers')
-      .select('*')
-      .eq('room_id', localRoom.id)
-      .eq('question_number', localRoom.current_question)
+      .select('id')
+      .eq('room_id', roomId)
+      .eq('question_number', questionNumber)
 
-    console.log('Checking answers:', data?.length, 'vs players:', playersData?.length)
+    const allDone = !!(pl && ans && ans.length >= pl.length)
+    if (allDone) console.log('All players answered:', ans!.length, '/', pl!.length)
+    return allDone
+  }
 
-    if (data && playersData && data.length === playersData.length) {
-      showQuestionResults(data)
+  // ── Auto-submit (timer expired) ──
+  const doAutoSubmit = async () => {
+    const qn = questionNumRef.current
+    console.log('Auto-submitting for question', qn)
+
+    const { error } = await supabase.from('player_answers').insert({
+      room_id: roomId,
+      question_number: qn,
+      player_id: playerId,
+      answer_index: -1,
+      time_taken: initialRoom.time_limit,
+      is_correct: false,
+      points_earned: 0
+    })
+
+    if (error) {
+      console.error('Auto-submit INSERT error:', error)
+    } else {
+      console.log('Auto-submit succeeded for question', qn)
     }
   }
 
-  const showQuestionResults = async (answers: any[]) => {
-    setQuestionResults(answers)
-    setShowResults(true)
-
-    // Capture current values to avoid stale closure
-    const roomId = localRoom.id
-    const currentQuestionNum = localRoom.current_question
-    const questionCount = localRoom.question_count
-
-    // Update player scores
-    for (const answer of answers) {
-      if (answer.is_correct) {
-        await supabase.rpc('increment_score', {
-          p_room_id: roomId,
-          p_player_id: answer.player_id,
-          p_points: answer.points_earned
-        })
-      }
-    }
-
-    // Reload players to get updated scores
-    await loadPlayers()
-
-    console.log('Showing results for question', currentQuestionNum, 'will advance in 5 seconds')
-
-    // Move to next question after 5 seconds
-    setTimeout(async () => {
-      const nextQuestion = currentQuestionNum + 1
-      
-      // Check current room state to avoid double updates
-      const { data: currentRoom } = await supabase
-        .from('rooms')
-        .select('current_question, status')
-        .eq('id', roomId)
-        .single()
-
-      console.log('Attempting to advance question. DB shows:', currentRoom?.current_question, 'captured was:', currentQuestionNum, 'next will be:', nextQuestion)
-
-      // Only advance if we're still on the same question (prevents double advancement)
-      if (currentRoom && currentRoom.current_question === currentQuestionNum) {
-        if (nextQuestion >= questionCount) {
-          console.log('Game finished, updating status')
-          const { error } = await supabase
-            .from('rooms')
-            .update({ status: 'finished' })
-            .eq('id', roomId)
-            .eq('current_question', currentQuestionNum)
-          console.log('Finish update error:', error)
-        } else {
-          console.log('Advancing to question', nextQuestion)
-          const { error } = await supabase
-            .from('rooms')
-            .update({ current_question: nextQuestion })
-            .eq('id', roomId)
-            .eq('current_question', currentQuestionNum)
-          console.log('Advance update error:', error)
-        }
-      } else {
-        console.log('Question already advanced by another player')
-      }
-    }, 5000)
-  }
-
-  const submitAnswer = async (answerIndex: number, timeTaken: number) => {
-    if (hasAnswered || !currentQuestion) return
-
+  // ── Submit answer (player clicked) ──
+  const submitAnswer = async (answerIndex: number) => {
+    if (hasAnsweredRef.current || !currentQuestion) return
+    hasAnsweredRef.current = true
     setHasAnswered(true)
     setSelectedAnswer(answerIndex)
 
     const isCorrect = answerIndex === currentQuestion.correct_index
     const timeBonus = Math.floor((timeLeft / localRoom.time_limit) * 100)
     let points = isCorrect ? 1000 + timeBonus : 0
-    
-    if (doublePointsActive && isCorrect) {
-      points *= 2
-    }
+    if (doublePointsActive && isCorrect) points *= 2
 
-    // Update local stats
     if (isCorrect) {
       setCorrectCount(prev => prev + 1)
       updateStreak(true)
@@ -255,28 +238,120 @@ export default function GameScreen({ room, playerId }: Props) {
       setFastestAnswer(answerTime)
     }
 
-    // Check for new achievements
     const achievements = checkAndAwardAchievements()
     if (achievements.length > 0) {
       setNewAchievements(prev => [...prev, ...achievements])
     }
 
-    await supabase.from('player_answers').insert({
-      room_id: localRoom.id,
-      question_number: localRoom.current_question,
+    const { error } = await supabase.from('player_answers').insert({
+      room_id: roomId,
+      question_number: questionNumRef.current,
       player_id: playerId,
       answer_index: answerIndex,
-      time_taken: timeTaken,
+      time_taken: answerTime,
       is_correct: isCorrect,
       points_earned: points
     })
 
-    checkAllAnswered()
+    if (error) {
+      console.error('submitAnswer INSERT error:', error)
+      return
+    }
+
+    console.log('Answer submitted for question', questionNumRef.current)
+
+    // Owner: immediately check if all done (don't wait for next poll)
+    if (localRoom.owner_id === playerId && !isAdvancingRef.current) {
+      const allDone = await areAllAnswered(questionNumRef.current)
+      if (allDone) doAdvance(localRoom)
+    }
   }
 
+  // ── Advance to next question (owner only) ──
+  const doAdvance = async (room: Room) => {
+    if (isAdvancingRef.current) return
+    isAdvancingRef.current = true
+    console.log('Advancing from question', room.current_question)
+
+    // Score update (best-effort, don't block on failure)
+    try {
+      const { data: answers } = await supabase
+        .from('player_answers')
+        .select('*')
+        .eq('room_id', roomId)
+        .eq('question_number', room.current_question)
+
+      if (answers) {
+        for (const a of answers) {
+          if (a.is_correct && a.points_earned > 0) {
+            // Try RPC first, fall back to direct update
+            const { error } = await supabase.rpc('increment_player_score', {
+              p_room_id: roomId,
+              p_player_id: a.player_id,
+              p_points: a.points_earned,
+            })
+            if (error) {
+              console.warn('RPC failed, using direct update:', error.message)
+              const { data: pl } = await supabase
+                .from('room_players')
+                .select('score')
+                .eq('room_id', roomId)
+                .eq('player_id', a.player_id)
+                .single()
+              if (pl) {
+                await supabase
+                  .from('room_players')
+                  .update({ score: pl.score + a.points_earned })
+                  .eq('room_id', roomId)
+                  .eq('player_id', a.player_id)
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Score processing error (continuing anyway):', e)
+    }
+
+    await loadPlayers()
+
+    // 5-second countdown between questions
+    for (let i = 5; i > 0; i--) {
+      setNextQuestionIn(i)
+      await new Promise(r => setTimeout(r, 1000))
+    }
+    setNextQuestionIn(null)
+
+    // Move to next question or finish
+    const next = room.current_question + 1
+    if (next >= room.question_count) {
+      console.log('Game finished!')
+      const { error } = await supabase
+        .from('rooms')
+        .update({ status: 'finished' })
+        .eq('id', roomId)
+      if (error) console.error('Finish game error:', error)
+    } else {
+      const start = new Date()
+      const end = new Date(start.getTime() + room.time_limit * 1000)
+      console.log('DB update: advancing to question', next)
+      const { error } = await supabase
+        .from('rooms')
+        .update({
+          current_question: next,
+          question_start_time: start.toISOString(),
+          question_end_time: end.toISOString(),
+        })
+        .eq('id', roomId)
+      if (error) console.error('Advance question error:', error)
+    }
+
+    // Note: isAdvancingRef is reset by the poll when it detects the question change
+  }
+
+  // ── Power-ups ──
   const usePowerUp = (powerUpKey: string) => {
     if (usedPowerUps.has(powerUpKey) || hasAnswered) return
-
     setUsedPowerUps(prev => new Set(prev).add(powerUpKey))
 
     switch (powerUpKey) {
@@ -287,86 +362,84 @@ export default function GameScreen({ room, playerId }: Props) {
         const toHide = wrongIndices.sort(() => Math.random() - 0.5).slice(0, 2)
         setHiddenOptions(new Set(toHide))
         break
-      
       case 'extra_time':
         setTimeLeft(prev => prev + 10)
         break
-      
       case 'double_points':
         setDoublePointsActive(true)
         break
     }
   }
 
+  // ════════════════════════════════════════
+  //  RENDER
+  // ════════════════════════════════════════
+
   if (localRoom.status === 'finished') {
-    // Record game completion
     const currentPlayer = players.find(p => p.player_id === playerId)
     const isWinner = currentPlayer && currentPlayer.score === Math.max(...players.map(p => p.score))
     recordGameComplete(!!isWinner, correctCount, correctCount + incorrectCount, fastestAnswer || undefined)
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 flex items-center justify-center p-4">
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="bg-white/10 backdrop-blur-sm rounded-lg p-8 max-w-2xl w-full"
-        >
-          <Trophy className="w-16 h-16 text-yellow-400 mx-auto mb-4" />
-          <h1 className="text-4xl font-bold text-white text-center mb-8">Game Over!</h1>
+      <div className="min-h-screen bg-gradient-to-br from-pink-200 via-rose-300 to-red-200 flex items-center justify-center p-4 relative overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-10 left-10 text-6xl opacity-20 animate-pulse">💕</div>
+          <div className="absolute top-32 right-20 text-4xl opacity-30 animate-bounce">💝</div>
+          <div className="absolute bottom-20 left-1/4 text-5xl opacity-25 animate-pulse">💖</div>
+        </div>
+
+        <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 max-w-2xl w-full border-2 border-pink-300 shadow-2xl relative z-10">
+          <Heart className="w-16 h-16 text-rose-600 fill-rose-600 mx-auto mb-4 animate-pulse" />
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-rose-600 via-pink-600 to-red-600 bg-clip-text text-transparent text-center mb-8">Game Over! 💕</h1>
 
           <div className="space-y-4 mb-8">
             {players.map((player, index) => (
-              <motion.div
+              <div
                 key={player.id}
-                initial={{ x: -100, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: index * 0.1 }}
-                className={`flex items-center justify-between p-4 rounded-lg ${
-                  index === 0 ? 'bg-yellow-500/30 border-2 border-yellow-400' : 'bg-white/10'
-                } ${player.player_id === playerId ? 'ring-2 ring-blue-400' : ''}`}
+                className={`flex items-center justify-between p-4 rounded-xl ${
+                  index === 0 ? 'bg-gradient-to-r from-pink-300 to-rose-300 border-2 border-rose-500' : 'bg-pink-100'
+                } ${player.player_id === playerId ? 'ring-2 ring-rose-500' : ''}`}
               >
                 <div className="flex items-center gap-4">
-                  <span className="text-2xl font-bold text-white">#{index + 1}</span>
-                  <span className="text-lg text-white font-medium">
+                  <span className="text-2xl font-bold text-rose-700">#{index + 1}</span>
+                  <span className="text-lg text-rose-900 font-medium">
                     {player.player_name}
-                    {player.player_id === playerId && ' (You)'}
+                    {player.player_id === playerId && ' 💕 (You)'}
                   </span>
                 </div>
-                <span className="text-2xl font-bold text-yellow-400">{player.score}</span>
-              </motion.div>
+                <span className="text-2xl font-bold text-pink-600">{player.score} 💖</span>
+              </div>
             ))}
           </div>
 
-          {/* Personal Stats */}
-          <div className="bg-white/5 rounded-lg p-6 mb-6">
-            <h3 className="text-xl font-bold text-white mb-4">Your Stats</h3>
+          <div className="bg-rose-50 rounded-xl p-6 mb-6 border border-pink-300">
+            <h3 className="text-xl font-bold text-rose-700 mb-4">💕 Your Stats</h3>
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
-                <p className="text-2xl font-bold text-green-400">{correctCount}</p>
-                <p className="text-sm text-gray-400">Correct</p>
+                <p className="text-2xl font-bold text-green-600">{correctCount}</p>
+                <p className="text-sm text-rose-600">Correct</p>
               </div>
               <div>
-                <p className="text-2xl font-bold text-red-400">{incorrectCount}</p>
-                <p className="text-sm text-gray-400">Incorrect</p>
+                <p className="text-2xl font-bold text-red-500">{incorrectCount}</p>
+                <p className="text-sm text-rose-600">Incorrect</p>
               </div>
               <div>
-                <p className="text-2xl font-bold text-purple-400">
+                <p className="text-2xl font-bold text-pink-600">
                   {((correctCount / (correctCount + incorrectCount)) * 100 || 0).toFixed(0)}%
                 </p>
-                <p className="text-sm text-gray-400">Accuracy</p>
+                <p className="text-sm text-rose-600">Accuracy</p>
               </div>
             </div>
           </div>
 
           <button
             onClick={() => window.location.href = '/'}
-            className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-lg transition"
+            className="w-full bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white font-bold py-3 rounded-xl transition shadow-lg transform hover:scale-105"
           >
-            Back to Home
+            💗 Back to Home
           </button>
-        </motion.div>
+        </div>
 
-        {/* Achievement Toasts */}
         <div className="fixed top-4 right-4 space-y-2">
           {newAchievements.map((key, index) => (
             <AchievementToast
@@ -382,43 +455,53 @@ export default function GameScreen({ room, playerId }: Props) {
   }
 
   if (!currentQuestion) {
-    console.log('No current question - showing error message')
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 flex items-center justify-center p-4">
-        <div className="bg-white/10 backdrop-blur-sm rounded-lg p-8 max-w-md w-full text-center">
-          <h2 className="text-2xl font-bold text-white mb-4">Game Not Ready</h2>
-          <p className="text-gray-300 mb-6">
-            The game hasn't been properly initialized. Please return to the lobby and start again.
-          </p>
-          <button
-            onClick={() => window.location.href = '/'}
-            className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-lg transition"
-          >
-            Back to Home
-          </button>
+      <div className="min-h-screen bg-gradient-to-br from-pink-200 via-rose-300 to-red-200 flex items-center justify-center p-4">
+        <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 max-w-md w-full text-center border-2 border-pink-300 shadow-xl">
+          <Heart className="w-16 h-16 text-rose-500 mx-auto mb-4 animate-pulse" />
+          <h2 className="text-2xl font-bold text-rose-700 mb-4">Loading... 💕</h2>
+          <p className="text-rose-600">Preparing your questions...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 p-4">
-      <div className="max-w-4xl mx-auto py-8">
+    <div className="min-h-screen bg-gradient-to-br from-pink-200 via-rose-300 to-red-200 p-4 relative overflow-hidden">
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-20 left-20 text-5xl opacity-15 animate-pulse">💕</div>
+        <div className="absolute top-40 right-32 text-3xl opacity-20 animate-bounce">💖</div>
+        <div className="absolute bottom-32 left-1/3 text-4xl opacity-15 animate-pulse">💗</div>
+        <div className="absolute bottom-20 right-1/4 text-3xl opacity-20">💝</div>
+      </div>
+
+      <div className="max-w-4xl mx-auto py-8 relative z-10">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg px-6 py-3">
-            <span className="text-white font-semibold">
-              Question {localRoom.current_question + 1} / {localRoom.question_count}
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl px-6 py-3 border-2 border-pink-300 shadow-lg">
+            <span className="text-rose-700 font-bold">
+              💕 Question {localRoom.current_question + 1} / {localRoom.question_count}
             </span>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg px-6 py-3 flex items-center gap-2">
-            <Clock className="w-5 h-5 text-yellow-400" />
-            <span className={`text-2xl font-bold ${timeLeft <= 5 ? 'text-red-400' : 'text-white'}`}>
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl px-6 py-3 flex items-center gap-2 border-2 border-pink-300 shadow-lg">
+            <Heart className={`w-5 h-5 ${timeLeft <= 5 ? 'text-red-600 fill-red-600 animate-pulse' : 'text-pink-600 fill-pink-600'}`} />
+            <span className={`text-2xl font-bold ${timeLeft <= 5 ? 'text-red-600' : 'text-rose-700'}`}>
               {timeLeft}s
             </span>
           </div>
         </div>
+
+        {/* Between-question countdown */}
+        {hasAnswered && timeLeft === 0 && (
+          <div className="text-center mb-4">
+            <span className="bg-white/80 backdrop-blur-sm rounded-xl px-6 py-2 text-rose-700 font-bold border-2 border-pink-300 shadow-lg inline-block">
+              {nextQuestionIn
+                ? `Next question in ${nextQuestionIn}s...`
+                : 'Waiting for next question...'}
+            </span>
+          </div>
+        )}
 
         {/* Power-ups */}
         {!hasAnswered && (
@@ -431,15 +514,15 @@ export default function GameScreen({ room, playerId }: Props) {
                   key={powerUp.key}
                   onClick={() => usePowerUp(powerUp.key)}
                   disabled={used}
-                  className={`flex flex-col items-center gap-1 px-4 py-3 rounded-lg transition ${
+                  className={`flex flex-col items-center gap-1 px-4 py-3 rounded-xl transition border-2 shadow-lg ${
                     used
-                      ? 'bg-gray-500 cursor-not-allowed opacity-50'
-                      : 'bg-purple-500 hover:bg-purple-600'
+                      ? 'bg-gray-300 border-gray-400 cursor-not-allowed opacity-50'
+                      : 'bg-gradient-to-br from-pink-400 to-rose-500 border-pink-300 hover:from-pink-500 hover:to-rose-600 transform hover:scale-105'
                   }`}
                   title={powerUp.description}
                 >
                   <Icon className="w-6 h-6 text-white" />
-                  <span className="text-xs text-white font-semibold">{powerUp.name}</span>
+                  <span className="text-xs text-white font-bold">{powerUp.name}</span>
                 </button>
               )
             })}
@@ -447,87 +530,39 @@ export default function GameScreen({ room, playerId }: Props) {
         )}
 
         {/* Question */}
-        <AnimatePresence mode="wait">
-          {!showResults ? (
-            <motion.div
-              key="question"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="bg-white/10 backdrop-blur-sm rounded-lg p-8 mb-6"
-            >
-              <h2 className="text-2xl md:text-3xl font-bold text-white mb-8 text-center">
-                {currentQuestion.question}
-              </h2>
+        <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 mb-6 border-2 border-pink-300 shadow-xl">
+          <h2 className="text-2xl md:text-3xl font-bold text-rose-700 mb-8 text-center">
+            ✝️ {currentQuestion.question}
+          </h2>
 
-              <div className="grid md:grid-cols-2 gap-4">
-                {currentQuestion.options.map((option, index) => {
-                  const isHidden = hiddenOptions.has(index)
-                  if (isHidden) return <div key={index} className="h-20"></div>
+          <div className="grid md:grid-cols-2 gap-4">
+            {currentQuestion.options.map((option, index) => {
+              const isHidden = hiddenOptions.has(index)
+              if (isHidden) return <div key={index} className="h-20"></div>
 
-                  return (
-                    <button
-                      key={index}
-                      onClick={() => {
-                        if (!hasAnswered) {
-                          submitAnswer(index, localRoom.time_limit - timeLeft)
-                        }
-                      }}
-                      disabled={hasAnswered}
-                      className={`p-6 rounded-lg text-left text-lg font-medium transition ${
-                        hasAnswered
-                          ? selectedAnswer === index
-                            ? index === currentQuestion.correct_index
-                              ? 'bg-green-500 text-white'
-                              : 'bg-red-500 text-white'
-                            : index === currentQuestion.correct_index
-                            ? 'bg-green-500 text-white'
-                            : 'bg-white/20 text-gray-300'
-                          : 'bg-white/20 hover:bg-white/30 text-white'
-                      } disabled:cursor-not-allowed`}
-                    >
-                      {option}
-                    </button>
-                  )
-                })}
-              </div>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="results"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="bg-white/10 backdrop-blur-sm rounded-lg p-8 mb-6"
-            >
-              <h2 className="text-2xl font-bold text-white mb-4 text-center">
-                Correct Answer: {currentQuestion.options[currentQuestion.correct_index]}
-              </h2>
-              <p className="text-gray-300 text-center mb-4">Moving to next question...</p>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Leaderboard */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
-          <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-            <Trophy className="w-5 h-5 text-yellow-400" />
-            Leaderboard
-          </h3>
-          <div className="space-y-2">
-            {players.map((player, index) => (
-              <div
-                key={player.id}
-                className={`flex items-center justify-between p-3 rounded-lg ${
-                  player.player_id === playerId ? 'bg-blue-500/30' : 'bg-white/10'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-white font-bold">#{index + 1}</span>
-                  <span className="text-white">{player.player_name}</span>
-                </div>
-                <span className="text-yellow-400 font-bold">{player.score}</span>
-              </div>
-            ))}
+              return (
+                <button
+                  key={index}
+                  onClick={() => {
+                    if (!hasAnswered) submitAnswer(index)
+                  }}
+                  disabled={hasAnswered}
+                  className={`p-6 rounded-xl text-left text-lg font-medium transition border-2 shadow-lg ${
+                    hasAnswered
+                      ? selectedAnswer === index
+                        ? index === currentQuestion.correct_index
+                          ? 'bg-gradient-to-r from-green-400 to-emerald-500 text-white border-green-500'
+                          : 'bg-gradient-to-r from-red-400 to-rose-500 text-white border-red-500'
+                        : index === currentQuestion.correct_index
+                        ? 'bg-gradient-to-r from-green-400 to-emerald-500 text-white border-green-500'
+                        : 'bg-pink-50 text-rose-400 border-pink-200'
+                      : 'bg-gradient-to-br from-pink-100 to-rose-100 hover:from-pink-200 hover:to-rose-200 text-rose-800 border-pink-300 hover:border-pink-400 transform hover:scale-105'
+                  } disabled:cursor-not-allowed`}
+                >
+                  {option}
+                </button>
+              )
+            })}
           </div>
         </div>
       </div>

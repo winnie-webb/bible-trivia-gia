@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { getProfile, initializeProfile } from '@/lib/localStorage'
-import { BookOpen, Users, Trophy, User } from 'lucide-react'
+import { Heart, Users, Trophy, User, Sparkles } from 'lucide-react'
 
 export default function Home() {
   const router = useRouter()
@@ -140,35 +140,46 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 flex items-center justify-center p-4">
-      <div className="max-w-md w-full space-y-8">
+    <div className="min-h-screen bg-gradient-to-br from-pink-200 via-rose-300 to-red-200 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Floating hearts decoration */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-10 left-10 text-6xl opacity-20 animate-pulse">💕</div>
+        <div className="absolute top-32 right-20 text-4xl opacity-30 animate-bounce">💝</div>
+        <div className="absolute bottom-20 left-1/4 text-5xl opacity-25 animate-pulse">💖</div>
+        <div className="absolute bottom-40 right-1/3 text-4xl opacity-20 animate-bounce">💗</div>
+      </div>
+      
+      <div className="max-w-md w-full space-y-8 relative z-10">
         {/* Header */}
         <div className="text-center">
-          <BookOpen className="mx-auto h-16 w-16 text-yellow-400" />
-          <h1 className="mt-4 text-4xl font-bold text-white">Gia Trivia</h1>
-          <p className="mt-2 text-gray-300">Test your biblical knowledge with friends!</p>
+          <div className="relative inline-block">
+            <Heart className="mx-auto h-16 w-16 text-rose-600 fill-rose-600 animate-pulse" />
+            <Sparkles className="absolute -top-1 -right-1 h-6 w-6 text-pink-500" />
+          </div>
+          <h1 className="mt-4 text-4xl font-bold bg-gradient-to-r from-rose-600 via-pink-600 to-red-600 bg-clip-text text-transparent">Bible Trivia for My Love 💕</h1>
+          <p className="mt-2 text-rose-800 font-medium">A special Valentine's gift - Learn God's Word together! ✝️</p>
           
           {hasProfile && (
             <div className="flex justify-center gap-3 mt-4">
               <button
                 onClick={() => router.push('/profile')}
-                className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-white transition"
+                className="flex items-center gap-2 bg-rose-500/20 hover:bg-rose-500/30 border border-rose-400 px-4 py-2 rounded-full text-rose-700 transition font-semibold"
               >
                 <User className="w-4 h-4" />
                 Profile
               </button>
               <button
                 onClick={() => router.push('/leaderboard')}
-                className="flex items-center gap-2 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-400 px-4 py-2 rounded-lg text-white transition"
+                className="flex items-center gap-2 bg-pink-500/20 hover:bg-pink-500/30 border border-pink-400 px-4 py-2 rounded-full text-pink-700 transition font-semibold"
               >
                 <Trophy className="w-4 h-4" />
                 Leaderboard
               </button>
               <button
                 onClick={() => router.push('/daily-challenge')}
-                className="flex items-center gap-2 bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-400 px-4 py-2 rounded-lg text-white transition"
+                className="flex items-center gap-2 bg-red-500/20 hover:bg-red-500/30 border border-red-400 px-4 py-2 rounded-full text-red-700 transition font-semibold"
               >
-                <Trophy className="w-4 h-4" />
+                <Heart className="w-4 h-4" />
                 Daily
               </button>
             </div>
@@ -177,26 +188,26 @@ export default function Home() {
 
         {/* Stats */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center">
-            <Users className="mx-auto h-8 w-8 text-blue-400 mb-2" />
-            <p className="text-white font-semibold">Multiplayer</p>
-            <p className="text-gray-300 text-sm">Up to 10 players</p>
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 text-center border-2 border-pink-300 shadow-lg">
+            <Users className="mx-auto h-8 w-8 text-rose-600 mb-2" />
+            <p className="text-rose-700 font-bold">Play Together</p>
+            <p className="text-rose-600 text-sm">Up to 10 players 💑</p>
           </div>
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center">
-            <Trophy className="mx-auto h-8 w-8 text-yellow-400 mb-2" />
-            <p className="text-white font-semibold">Real-time</p>
-            <p className="text-gray-300 text-sm">Live scoring</p>
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 text-center border-2 border-pink-300 shadow-lg">
+            <Heart className="mx-auto h-8 w-8 text-pink-600 fill-pink-600 mb-2" />
+            <p className="text-pink-700 font-bold">Real-time Fun</p>
+            <p className="text-pink-600 text-sm">Live scoring 💖</p>
           </div>
         </div>
 
         {/* Player Name */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 space-y-4">
+        <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 space-y-4 border-2 border-pink-300 shadow-xl">
           <input
             type="text"
-            placeholder="Enter your name"
+            placeholder="💝 Enter your name, my love"
             value={playerName}
             onChange={(e) => setPlayerName(e.target.value)}
-            className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+            className="w-full px-4 py-3 bg-rose-50 border-2 border-pink-300 rounded-xl text-rose-900 placeholder-rose-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 font-medium"
             maxLength={20}
           />
 
@@ -204,18 +215,18 @@ export default function Home() {
           <button
             onClick={createRoom}
             disabled={loading}
-            className="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 px-4 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white font-bold py-3 px-4 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg transform hover:scale-105"
           >
-            {loading ? 'Creating...' : 'Create New Room'}
+            {loading ? '💕 Creating...' : '💖 Create New Room'}
           </button>
 
           {/* Divider */}
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-white/30"></div>
+              <div className="w-full border-t border-pink-300"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-transparent text-gray-300">or</span>
+              <span className="px-2 bg-white/90 text-rose-600 font-semibold">💕 or 💕</span>
             </div>
           </div>
 
@@ -223,15 +234,15 @@ export default function Home() {
           <div id="join-section">
             <input
               type="text"
-              placeholder="Enter room code"
+              placeholder="💌 Enter room code"
               value={roomCode}
               onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
-              className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 uppercase"
+              className="w-full px-4 py-3 bg-rose-50 border-2 border-pink-300 rounded-xl text-rose-900 placeholder-rose-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 uppercase font-bold tracking-wider font-medium"
               maxLength={6}
             />
             {roomCode && (
-              <p className="text-sm text-yellow-400 mt-1">
-                Ready to join room {roomCode}!
+              <p className="text-sm text-rose-600 mt-1 font-semibold">
+                💝 Ready to join room {roomCode}!
               </p>
             )}
           </div>
@@ -239,16 +250,21 @@ export default function Home() {
           <button
             onClick={() => joinRoom()}
             disabled={loading}
-            className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700 text-white font-bold py-3 px-4 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg transform hover:scale-105"
           >
-            {loading ? 'Joining...' : 'Join Room'}
+            {loading ? '💗 Joining...' : '💗 Join Room'}
           </button>
         </div>
 
         {/* Footer */}
-        <p className="text-center text-gray-400 text-sm">
-          Questions cover both Old and New Testament
-        </p>
+        <div className="text-center space-y-2">
+          <p className="text-rose-700 text-sm font-medium">
+            ✝️ Questions cover both Old and New Testament ✝️
+          </p>
+          <p className="text-pink-600 text-xs italic">
+            "Love the Lord your God with all your heart" - Matthew 22:37 💕
+          </p>
+        </div>
       </div>
     </div>
   )

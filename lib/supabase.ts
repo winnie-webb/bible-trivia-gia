@@ -17,6 +17,9 @@ export type Room = {
   created_at: string
   category?: string
   power_ups_enabled?: boolean
+  showing_results?: boolean
+  question_end_time?: string
+  question_start_time?: string
 }
 
 export type RoomPlayer = {

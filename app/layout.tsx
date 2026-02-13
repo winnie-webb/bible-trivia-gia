@@ -5,8 +5,8 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Bible Trivia - Multiplayer Game',
-  description: 'Test your biblical knowledge with friends in real-time!',
+  title: 'Bible Trivia \ud83d\udc95 A Valentine\'s Gift',
+  description: 'A special Valentine\'s Day gift - Test your biblical knowledge together with love!',
 }
 
 export default function RootLayout({
