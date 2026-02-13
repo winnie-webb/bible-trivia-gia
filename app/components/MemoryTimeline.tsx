@@ -1,7 +1,8 @@
 'use client'
 
 import { useRef } from 'react'
-import { motion, useInView } from 'framer-motion'
+import { motion, useInView, useTransform } from 'framer-motion'
+import { useParallax } from '@/app/components/ValentineExperience'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -12,49 +13,47 @@ type Memory = {
   date?: string
 }
 
+// ─── Constants ───────────────────────────────────────────────────────────────
+
+const PAPER_GRAIN =
+  'repeating-conic-gradient(rgba(0,0,0,0.015) 0% 25%, transparent 0% 50%) 0 0 / 4px 4px'
+
 // ─── Default Memories ────────────────────────────────────────────────────────
 
 const DEFAULT_MEMORIES: Memory[] = [
   {
-    title: 'When We First Met',
+    title: 'Our First Bible Study',
     message:
-      'A year ago, we were strangers. God had a beautiful plan we couldn\'t yet see. That first moment I saw your smile, something stirred in my heart.',
-    emoji: '✨',
-    date: 'Early 2025',
+      'The first time we studied God\'s Word together — two hearts learning side by side. I didn\'t know it then, but that moment planted a seed that would bloom into something beautiful.',
+    emoji: '📖',
+    date: 'A day I\'ll never forget',
   },
   {
-    title: 'Our First Real Conversation',
+    title: 'When We Became Official',
     message:
-      'We talked for hours and it felt like minutes. I knew then that you were different — a gift wrapped in grace and warmth.',
-    emoji: '💬',
-    date: 'A beautiful day',
+      'The day we made a covenant in our hearts — to be each other\'s. No more wondering, no more maybe. Just us, committed, with God at the center of it all.',
+    emoji: '💑',
+    date: 'The best yes',
   },
   {
-    title: 'The Moment I Knew',
+    title: 'When We Said "I Love You"',
     message:
-      'There was a quiet moment — maybe you don\'t even remember it — when I looked at you and thought, "This is the one God kept for me."',
-    emoji: '💖',
+      'Three words that changed everything. My heart was beating so fast, but the moment those words left our lips, everything felt right. Like it was always meant to be said.',
+    emoji: '❤️',
     date: 'Written on my heart',
   },
   {
-    title: 'Our Favorite Memory',
+    title: 'Our Birthdays Together',
     message:
-      'Every laugh, every prayer together, every late-night talk — they all blur into one golden feeling: joy. Pure, God-given joy.',
-    emoji: '🌅',
-    date: 'Every day with you',
-  },
-  {
-    title: 'What You Mean To Me',
-    message:
-      'You are my answered prayer, my Proverbs 31 woman, my Song of Solomon love. I thank God for you every single day.',
-    emoji: '🙏',
-    date: 'Now & forever',
+      'Celebrating the day God brought you into this world — there\'s no greater gift He could have given me. Every birthday with you is a reminder of His faithfulness.',
+    emoji: '🎂',
+    date: 'Our favourite celebrations',
   },
 ]
 
-// ─── Polaroid Card ───────────────────────────────────────────────────────────
+// ─── Memory Card ─────────────────────────────────────────────────────────────
 
-function PolaroidCard({
+function MemoryCard({
   memory,
   index,
 }: {
@@ -62,78 +61,142 @@ function PolaroidCard({
   index: number
 }) {
   const ref = useRef<HTMLDivElement>(null)
-  const isInView = useInView(ref, { once: true, margin: '-30px' })
+  const isInView = useInView(ref, { once: true, margin: '-60px' })
+  const parallax = useParallax()
 
-  // Alternate slight rotations for realism
-  const rotations = [-2.5, 1.8, -1.2, 2.3, -1.8]
-  const rotation = rotations[index % rotations.length]
+  // Subtle per-card parallax from mouse position
+  const offsetX = useTransform(
+    parallax?.mouseX ?? { get: () => 0 } as never,
+    [-1, 1],
+    [-(index + 1) * 3, (index + 1) * 3]
+  )
+  const offsetY = useTransform(
+    parallax?.mouseY ?? { get: () => 0 } as never,
+    [-1, 1],
+    [-(index + 1) * 2, (index + 1) * 2]
+  )
 
   return (
     <motion.div
       ref={ref}
-      className="relative mx-auto w-full max-w-[300px]"
-      initial={{ opacity: 0, y: 50, rotate: 0 }}
-      animate={
-        isInView
-          ? { opacity: 1, y: 0, rotate: rotation }
-          : { opacity: 0, y: 50, rotate: 0 }
-      }
-      transition={{
-        duration: 0.6,
-        delay: 0.15 + index * 0.12,
-        ease: [0.25, 0.1, 0.25, 1],
+      className="relative flex items-center justify-center py-8 sm:py-12"
+      style={{
+        minHeight: '50vh',
+        x: parallax ? offsetX : 0,
+        y: parallax ? offsetY : 0,
       }}
-      whileHover={{ rotate: 0, scale: 1.04, y: -4 }}
     >
-      <div
-        className="rounded-xl p-5 pb-6"
+      {/* Glow behind card */}
+      <motion.div
+        className="absolute inset-0 pointer-events-none"
         style={{
-          background: 'linear-gradient(145deg, #fffaf5, #fff5ee)',
+          background: `radial-gradient(ellipse at 50% 50%, rgba(220,100,120,0.12) 0%, transparent 60%)`,
+        }}
+        initial={{ opacity: 0 }}
+        animate={isInView ? { opacity: 1 } : { opacity: 0 }}
+        transition={{ duration: 1, delay: 0.2 }}
+      />
+
+      <motion.div
+        className="relative w-full max-w-md mx-auto rounded-2xl px-6 py-8 sm:px-8 sm:py-10"
+        style={{
+          backgroundColor: '#fdf6ec',
+          backgroundImage: PAPER_GRAIN,
           boxShadow:
-            '0 8px 30px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.8)',
-          border: '1px solid rgba(227,138,164,0.12)',
+            '0 16px 50px rgba(0,0,0,0.35), 0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1)',
+          border: '1px solid rgba(220,160,170,0.15)',
+        }}
+        initial={{ opacity: 0, scale: 0.85, rotateX: 8 }}
+        animate={
+          isInView
+            ? { opacity: 1, scale: 1, rotateX: 0 }
+            : { opacity: 0, scale: 0.85, rotateX: 8 }
+        }
+        transition={{
+          type: 'spring',
+          stiffness: 80,
+          damping: 16,
+          delay: 0.1 + index * 0.05,
         }}
       >
-        {/* Emoji / Photo placeholder area */}
-        <div
-          className="rounded-lg h-32 flex items-center justify-center mb-4"
-          style={{
-            background:
-              'linear-gradient(135deg, var(--soft), var(--highlight))',
+        {/* Emoji icon */}
+        <motion.div
+          className="text-center mb-5"
+          initial={{ opacity: 0, scale: 0 }}
+          animate={
+            isInView
+              ? { opacity: 1, scale: 1 }
+              : { opacity: 0, scale: 0 }
+          }
+          transition={{
+            type: 'spring',
+            stiffness: 200,
+            damping: 12,
+            delay: 0.3 + index * 0.05,
           }}
         >
           <span className="text-5xl">{memory.emoji}</span>
-        </div>
-
-        {/* Title */}
-        <h3
-          className="text-lg font-semibold mb-2"
-          style={{
-            fontFamily: 'var(--font-playfair), Georgia, serif',
-            color: 'var(--foreground)',
-          }}
-        >
-          {memory.title}
-        </h3>
-
-        {/* Message */}
-        <p
-          className="text-sm leading-relaxed mb-3"
-          style={{ color: 'var(--muted)' }}
-        >
-          {memory.message}
-        </p>
+        </motion.div>
 
         {/* Date */}
         {memory.date && (
-          <p
-            className="text-xs italic"
-            style={{ color: 'var(--primary)' }}
+          <motion.p
+            className="text-center text-xs uppercase tracking-[0.25em] mb-3"
+            style={{ color: 'rgba(190,80,100,0.6)' }}
+            initial={{ opacity: 0 }}
+            animate={isInView ? { opacity: 1 } : { opacity: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 + index * 0.05 }}
           >
             {memory.date}
-          </p>
+          </motion.p>
         )}
-      </div>
+
+        {/* Title */}
+        <motion.h3
+          className="text-center text-xl sm:text-2xl font-semibold mb-4"
+          style={{
+            fontFamily: 'var(--font-playfair), Georgia, serif',
+            color: '#5a3e3e',
+          }}
+          initial={{ opacity: 0, y: 12 }}
+          animate={
+            isInView
+              ? { opacity: 1, y: 0 }
+              : { opacity: 0, y: 12 }
+          }
+          transition={{ duration: 0.5, delay: 0.35 + index * 0.05 }}
+        >
+          {memory.title}
+        </motion.h3>
+
+        {/* Decorative line */}
+        <motion.div
+          className="mx-auto w-12 h-px mb-5"
+          style={{ background: 'rgba(190,80,100,0.3)' }}
+          initial={{ scaleX: 0 }}
+          animate={isInView ? { scaleX: 1 } : { scaleX: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 + index * 0.05 }}
+        />
+
+        {/* Message */}
+        <motion.p
+          className="text-center text-sm sm:text-base leading-relaxed"
+          style={{
+            fontFamily: "'Georgia', 'Times New Roman', serif",
+            color: '#6b4e4e',
+            lineHeight: 1.8,
+          }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={
+            isInView
+              ? { opacity: 1, y: 0 }
+              : { opacity: 0, y: 10 }
+          }
+          transition={{ duration: 0.6, delay: 0.45 + index * 0.05 }}
+        >
+          {memory.message}
+        </motion.p>
+      </motion.div>
     </motion.div>
   )
 }
@@ -147,48 +210,41 @@ export default function MemoryTimeline({
 }) {
   return (
     <section className="relative py-16 px-4 overflow-hidden">
-      {/* Subtle background accent */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            'radial-gradient(ellipse at 50% 0%, var(--soft) 0%, transparent 60%)',
-          opacity: 0.5,
-        }}
-      />
-
       {/* Section header */}
       <motion.div
-        className="relative z-10 text-center mb-12"
+        className="relative z-10 text-center mb-6"
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7, ease: 'easeOut' }}
       >
         <p
           className="text-sm uppercase tracking-[0.25em] mb-3"
-          style={{ color: 'var(--primary)' }}
+          style={{ color: 'rgba(220,160,170,0.7)' }}
         >
-          Our Story
+          Our Favourite Moments
         </p>
         <h2
           className="text-3xl sm:text-4xl font-semibold"
           style={{
             fontFamily: 'var(--font-playfair), Georgia, serif',
-            color: 'var(--foreground)',
+            color: '#fde4e8',
           }}
         >
-          Memory Lane
+          Favourite Memories Together
         </h2>
-        <div
+        <motion.div
           className="mt-4 mx-auto w-16 h-px"
-          style={{ background: 'var(--primary)' }}
+          style={{ background: 'rgba(220,160,170,0.4)' }}
+          initial={{ scaleX: 0 }}
+          animate={{ scaleX: 1 }}
+          transition={{ duration: 0.8, delay: 0.3 }}
         />
       </motion.div>
 
-      {/* Cards grid */}
-      <div className="relative z-10 max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-10">
+      {/* Vertical scroll-through cards */}
+      <div className="relative z-10 max-w-xl mx-auto">
         {memories.map((memory, i) => (
-          <PolaroidCard key={i} memory={memory} index={i} />
+          <MemoryCard key={i} memory={memory} index={i} />
         ))}
       </div>
     </section>
