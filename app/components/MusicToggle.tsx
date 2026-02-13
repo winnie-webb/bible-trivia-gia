@@ -7,7 +7,7 @@ import { Volume2, VolumeX } from 'lucide-react'
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function MusicToggle({
-  src = '/valentine-music.mp3',
+  src = '/dandelions.m4a',
 }: {
   src?: string
 }) {
