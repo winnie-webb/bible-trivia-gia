@@ -634,13 +634,13 @@ export default function ValentineExperience({
           reducedMotion={reducedMotion}
         />
 
-        <MusicToggle />
+        <MusicToggle autoStart={stage !== 'envelope'} />
         <HeartButton />
 
         {/* Close / Skip experience button */}
         <motion.button
           onClick={() => advance('app')}
-          className="fixed top-5 right-5 z-50 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-medium cursor-pointer border-none outline-none focus-visible:ring-2 focus-visible:ring-rose-400/60"
+          className="fixed top-5 left-5 z-50 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-medium cursor-pointer border-none outline-none focus-visible:ring-2 focus-visible:ring-rose-400/60"
           style={{
             color: 'rgba(220,160,170,0.7)',
             background: 'rgba(255,255,255,0.08)',

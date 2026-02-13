@@ -8,12 +8,15 @@ import { Volume2, VolumeX } from 'lucide-react'
 
 export default function MusicToggle({
   src = '/dandelions.m4a',
+  autoStart = false,
 }: {
   src?: string
+  autoStart?: boolean
 }) {
   const [playing, setPlaying] = useState(false)
   const [hasInteracted, setHasInteracted] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const autoStarted = useRef(false)
 
   // Create audio element on mount
   useEffect(() => {
@@ -54,6 +57,22 @@ export default function MusicToggle({
     },
     []
   )
+
+  // Auto-start music when triggered (e.g. after envelope tap)
+  useEffect(() => {
+    if (!autoStart || autoStarted.current || playing) return
+    const audio = audioRef.current
+    if (!audio) return
+
+    autoStarted.current = true
+    audio.play().then(() => {
+      fade(0.35, 1200)
+      setPlaying(true)
+      setHasInteracted(true)
+    }).catch(() => {
+      // Autoplay blocked — user can tap the toggle manually
+    })
+  }, [autoStart, playing, fade])
 
   const toggle = useCallback(() => {
     const audio = audioRef.current
