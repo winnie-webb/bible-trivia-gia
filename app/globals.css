@@ -48,6 +48,7 @@
   --color-border:       var(--border);
   --color-ring:         var(--ring);
   --font-sans: var(--font-inter);
+  --font-playfair: var(--font-playfair);
 }
 
 body {
