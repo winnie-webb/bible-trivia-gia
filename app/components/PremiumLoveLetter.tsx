@@ -23,7 +23,16 @@ type Props = {
 
 const STORAGE_KEY = 'letterViewed'
 
-const DEFAULT_MESSAGE = `Happy Valentine's ❤️\nThis little app is just for you.`
+const DEFAULT_MESSAGE = `My Beloved, My Valentine ❤️
+A year hence, I knew thee not. Thou wert a stranger unto mine eyes, and my heart had not yet learned the melody of thy name. How wondrous are the ways of the Lord, who in His perfect timing brought thee unto me — for He declareth in Ecclesiastes that to everything there is a season, and this, my darling, is our season of love.
+As Solomon sang of his beloved, so I sing of thee: "Thou art fair, my love; behold, thou art fair. Thy eyes are as doves behind thy veil." Thy beauty surpasseth the lilies of the field, and thy voice is sweeter than the honeycomb that drippeth upon my lips.
+Before I beheld thee, my garden was asleep, the winter had not yet passed. But thou camest as the spring — the flowers appeared upon the earth, the time of singing arrived, and the voice of the turtledove was heard in our land. Thou hast awakened love in the chambers of my heart where none had dwelt before.
+I marvel that the Almighty, who setteth the stars in their courses and knoweth the number of the sands upon the shore, did ordain that our paths should cross. He who maketh all things beautiful in His time hath made thee the most beautiful of all His works unto mine eyes.
+My love for thee is a akin to a flame that increaseth with every tender breath, every shared smile, every shared prayer, and every challenge we overcome together.
+From this Valentine's Day unto all our days, I am thine and thou art mine, as the Lord hath willed it.
+With all the love mine heart doth hold,
+Forever & Always
+Brian ♥`
 
 // Subtle paper-grain CSS gradient (no images needed)
 const PAPER_GRAIN =
@@ -429,13 +438,14 @@ export default function PremiumLoveLetter({ children, message }: Props) {
                    REVEALED LETTER WITH MESSAGE
                    ═══════════════════════════════════════════════════════ */
                 <motion.div
-                  className="relative w-[300px] sm:w-[380px] rounded-2xl px-8 py-10 sm:px-10 sm:py-12"
+                  className="relative w-[320px] sm:w-[420px] md:w-[480px] rounded-2xl px-6 py-8 sm:px-10 sm:py-12 overflow-y-auto"
                   style={{
                     backgroundColor: '#fdf6ec',
                     backgroundImage: PAPER_GRAIN,
                     boxShadow:
                       '0 20px 70px rgba(0,0,0,0.45), 0 4px 20px rgba(0,0,0,0.2)',
                     fontFamily: "'Georgia', 'Times New Roman', serif",
+                    maxHeight: '85vh',
                   }}
                   initial={{ opacity: 0, scale: 0.8, y: 40 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -463,16 +473,18 @@ export default function PremiumLoveLetter({ children, message }: Props) {
                       className="text-center leading-relaxed mb-3 last:mb-0"
                       style={{
                         color: '#5a3e3e',
-                        fontSize: i === 0 ? '1.4rem' : '1.05rem',
+                        fontSize: i === 0 ? '1.3rem' : '0.95rem',
                         fontWeight: i === 0 ? 600 : 400,
-                        letterSpacing: '0.025em',
-                        lineHeight: 1.7,
+                        letterSpacing: '0.02em',
+                        lineHeight: 1.75,
+                        textAlign: line.startsWith('With all') || line.startsWith('Forever') ? 'right' : undefined,
+                        fontStyle: line.startsWith('Forever') || line.startsWith('With all') ? 'italic' : undefined,
                       }}
-                      initial={{ opacity: 0, y: 20 }}
+                      initial={{ opacity: 0, y: 16 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{
-                        duration: 0.8,
-                        delay: 0.4 + i * 0.4,
+                        duration: 0.6,
+                        delay: 0.3 + i * 0.15,
                         ease: [0.25, 0.1, 0.25, 1],
                       }}
                       onAnimationComplete={() => {
@@ -490,7 +502,7 @@ export default function PremiumLoveLetter({ children, message }: Props) {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{
-                      delay: 0.4 + lines.length * 0.4 + 0.3,
+                      delay: 0.3 + lines.length * 0.15 + 0.2,
                       duration: 0.6,
                     }}
                   >
@@ -512,7 +524,7 @@ export default function PremiumLoveLetter({ children, message }: Props) {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{
-                      delay: 0.4 + lines.length * 0.4 + 0.6,
+                      delay: 0.3 + lines.length * 0.15 + 0.5,
                       duration: 0.5,
                     }}
                     whileHover={{ scale: 1.06 }}

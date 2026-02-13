@@ -1,58 +1,55 @@
 @import "tailwindcss";
 
+/* ═══════════════════════════════════════════════
+   GLOBAL THEME — edit these values to re-skin
+   the entire app in one place.
+   ═══════════════════════════════════════════════ */
 :root {
-  --background: #fff0f5;
-  --foreground: #4a0e2a;
-  --valentine-pink: #ff69b4;
-  --valentine-rose: #ff1493;
-  --valentine-red: #dc143c;
-  --valentine-purple: #da70d6;
-  --valentine-light: #ffe4e9;
+  /* Core palette */
+  --background: #fff7f9;        /* soft blush white */
+  --surface:    #ffffff;        /* cards */
+  --primary:    #e38aa4;        /* muted rose */
+  --primary-hover: #d96c8a;
+  --soft:       #ffe3ec;        /* very light pink */
+  --highlight:  #f6c7d6;        /* accent glow */
+  --foreground: #3a2e2e;        /* warm dark text */
+  --muted:      #8f7a7a;
+
+  /* Semantic */
+  --success: #6fcf97;
+  --error:   #eb6a6a;
+
+  /* Glass */
+  --glass:       rgba(255, 255, 255, 0.6);
+  --glass-hover: rgba(255, 255, 255, 0.8);
+
+  /* Borders */
+  --border: rgba(227, 138, 164, 0.25);
+  --ring:   rgba(227, 138, 164, 0.45);
 }
 
+
+/* Register tokens with Tailwind v4 so we can use
+   bg-primary, text-foreground, border-border, etc. */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #2d0a1f;
-    --foreground: #ffe4e9;
-  }
+  --color-background:   var(--background);
+  --color-surface:      var(--surface);
+  --color-primary:      var(--primary);
+  --color-primary-hover:var(--primary-hover);
+  --color-soft:         var(--soft);
+  --color-highlight:    var(--highlight);
+  --color-foreground:   var(--foreground);
+  --color-muted:        var(--muted);
+  --color-success:      var(--success);
+  --color-error:        var(--error);
+  --color-glass:        var(--glass);
+  --color-glass-hover:  var(--glass-hover);
+  --color-border:       var(--border);
+  --color-ring:         var(--ring);
+  --font-sans: var(--font-inter);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
-
-/* Valentine's Day animated hearts background */
-@keyframes float-hearts {
-  0% {
-    transform: translateY(100vh) rotate(0deg);
-    opacity: 0;
-  }
-  10% {
-    opacity: 1;
-  }
-  90% {
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(-100vh) rotate(360deg);
-    opacity: 0;
-  }
-}
-
-.floating-hearts::before {
-  content: '💕';
-  position: fixed;
-  font-size: 2rem;
-  animation: float-hearts 15s linear infinite;
-  pointer-events: none;
-  z-index: 1;
 }

@@ -138,8 +138,8 @@ export default function DailyChallengePlayPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 flex items-center justify-center">
-        <div className="text-white text-xl">Loading challenge...</div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-foreground text-xl">Loading challenge...</div>
       </div>
     )
   }
@@ -148,36 +148,36 @@ export default function DailyChallengePlayPage() {
     const accuracy = ((correctCount / questions.length) * 100).toFixed(0)
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="bg-white/10 backdrop-blur-sm rounded-lg p-8 max-w-2xl w-full"
+          className="bg-glass backdrop-blur-sm rounded-lg p-8 max-w-2xl w-full"
         >
-          <h1 className="text-4xl font-bold text-white text-center mb-8">
+          <h1 className="text-4xl font-bold text-foreground text-center mb-8">
             Challenge Complete! 🎉
           </h1>
 
-          <div className="bg-white/5 rounded-lg p-6 mb-6">
+          <div className="bg-surface rounded-lg p-6 mb-6">
             <div className="text-center mb-6">
-              <p className="text-6xl font-bold text-yellow-400 mb-2">{score}</p>
-              <p className="text-gray-300">Total Score</p>
+              <p className="text-6xl font-bold text-highlight mb-2">{score}</p>
+              <p className="text-muted">Total Score</p>
             </div>
 
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
-                <p className="text-3xl font-bold text-green-400">{correctCount}</p>
-                <p className="text-sm text-gray-400">Correct</p>
+                <p className="text-3xl font-bold text-success">{correctCount}</p>
+                <p className="text-sm text-muted">Correct</p>
               </div>
               <div>
-                <p className="text-3xl font-bold text-purple-400">{accuracy}%</p>
-                <p className="text-sm text-gray-400">Accuracy</p>
+                <p className="text-3xl font-bold text-primary">{accuracy}%</p>
+                <p className="text-sm text-muted">Accuracy</p>
               </div>
               <div>
-                <p className="text-3xl font-bold text-blue-400">
+                <p className="text-3xl font-bold text-soft">
                   {fastestAnswer ? `${fastestAnswer.toFixed(1)}s` : 'N/A'}
                 </p>
-                <p className="text-sm text-gray-400">Fastest</p>
+                <p className="text-sm text-muted">Fastest</p>
               </div>
             </div>
           </div>
@@ -185,13 +185,13 @@ export default function DailyChallengePlayPage() {
           <div className="space-y-3">
             <button
               onClick={() => router.push('/daily-challenge')}
-              className="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 rounded-lg transition"
+              className="w-full bg-primary hover:bg-primary-hover text-foreground font-bold py-3 rounded-lg transition"
             >
               Back to Daily Challenge
             </button>
             <button
               onClick={() => router.push('/')}
-              className="w-full bg-white/20 hover:bg-white/30 text-white font-bold py-3 rounded-lg transition"
+              className="w-full bg-glass hover:bg-glass-hover text-foreground font-bold py-3 rounded-lg transition"
             >
               Back to Home
             </button>
@@ -216,27 +216,27 @@ export default function DailyChallengePlayPage() {
   const currentQuestion = questions[currentQuestionIndex]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 p-4">
+    <div className="min-h-screen bg-background p-4">
       <div className="max-w-4xl mx-auto py-8">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg px-6 py-3">
-            <span className="text-white font-semibold">
+          <div className="bg-glass backdrop-blur-sm rounded-lg px-6 py-3">
+            <span className="text-foreground font-semibold">
               Question {currentQuestionIndex + 1} / {questions.length}
             </span>
           </div>
 
           <div className="flex gap-3">
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg px-6 py-3 flex items-center gap-2">
-              <Clock className="w-5 h-5 text-yellow-400" />
-              <span className={`text-2xl font-bold ${timeLeft <= 5 ? 'text-red-400' : 'text-white'}`}>
+            <div className="bg-glass backdrop-blur-sm rounded-lg px-6 py-3 flex items-center gap-2">
+              <Clock className="w-5 h-5 text-highlight" />
+              <span className={`text-2xl font-bold ${timeLeft <= 5 ? 'text-error' : 'text-foreground'}`}>
                 {timeLeft}s
               </span>
             </div>
 
             <button
               onClick={() => router.push('/daily-challenge')}
-              className="bg-white/10 hover:bg-white/20 px-4 py-3 rounded-lg text-white transition"
+              className="bg-glass hover:bg-glass-hover px-4 py-3 rounded-lg text-foreground transition"
             >
               <Home className="w-5 h-5" />
             </button>
@@ -244,9 +244,9 @@ export default function DailyChallengePlayPage() {
         </div>
 
         {/* Score */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-lg px-6 py-3 mb-6 text-center">
-          <span className="text-white text-lg">
-            Score: <span className="font-bold text-yellow-400">{score}</span>
+        <div className="bg-glass backdrop-blur-sm rounded-lg px-6 py-3 mb-6 text-center">
+          <span className="text-foreground text-lg">
+            Score: <span className="font-bold text-highlight">{score}</span>
           </span>
         </div>
 
@@ -257,9 +257,9 @@ export default function DailyChallengePlayPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="bg-white/10 backdrop-blur-sm rounded-lg p-8 mb-6"
+            className="bg-glass backdrop-blur-sm rounded-lg p-8 mb-6"
           >
-            <h2 className="text-2xl md:text-3xl font-bold text-white mb-8 text-center">
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-8 text-center">
               {currentQuestion.question}
             </h2>
 
@@ -273,12 +273,12 @@ export default function DailyChallengePlayPage() {
                     hasAnswered
                       ? selectedAnswer === index
                         ? index === currentQuestion.correct_index
-                          ? 'bg-green-500 text-white'
-                          : 'bg-red-500 text-white'
+                          ? 'bg-success text-background'
+                          : 'bg-error text-background'
                         : index === currentQuestion.correct_index
-                        ? 'bg-green-500 text-white'
-                        : 'bg-white/20 text-gray-300'
-                      : 'bg-white/20 hover:bg-white/30 text-white cursor-pointer'
+                        ? 'bg-success text-background'
+                        : 'bg-glass text-muted'
+                      : 'bg-glass hover:bg-glass-hover text-foreground cursor-pointer'
                   } disabled:cursor-not-allowed`}
                 >
                   {option}
@@ -292,7 +292,7 @@ export default function DailyChallengePlayPage() {
                 animate={{ opacity: 1 }}
                 className="mt-6 text-center"
               >
-                <p className="text-gray-300">
+                <p className="text-muted">
                   {selectedAnswer === currentQuestion.correct_index
                     ? '✓ Correct!'
                     : `✗ Incorrect. The answer was: ${currentQuestion.options[currentQuestion.correct_index]}`}

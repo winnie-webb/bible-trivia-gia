@@ -404,62 +404,62 @@ export default function GameScreen({ room: initialRoom, playerId }: Props) {
     recordGameComplete(!!isWinner, correctCount, correctCount + incorrectCount, fastestAnswer || undefined)
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-200 via-rose-300 to-red-200 flex items-center justify-center p-4 relative overflow-hidden">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-10 left-10 text-6xl opacity-20 animate-pulse">💕</div>
-          <div className="absolute top-32 right-20 text-4xl opacity-30 animate-bounce">💝</div>
-          <div className="absolute bottom-20 left-1/4 text-5xl opacity-25 animate-pulse">💖</div>
+          <div className="absolute top-10 left-10 text-6xl opacity-10 animate-pulse">✝️</div>
+          <div className="absolute top-32 right-20 text-4xl opacity-15 animate-bounce">📖</div>
+          <div className="absolute bottom-20 left-1/4 text-5xl opacity-10 animate-pulse">✨</div>
         </div>
 
-        <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 max-w-2xl w-full border-2 border-pink-300 shadow-2xl relative z-10">
-          <Heart className="w-16 h-16 text-rose-600 fill-rose-600 mx-auto mb-4 animate-pulse" />
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-rose-600 via-pink-600 to-red-600 bg-clip-text text-transparent text-center mb-8">Game Over! 💕</h1>
+        <div className="bg-surface backdrop-blur-sm rounded-2xl p-8 max-w-2xl w-full border border-border shadow-2xl relative z-10">
+          <Heart className="w-16 h-16 text-primary fill-primary mx-auto mb-4 animate-pulse" />
+          <h1 className="text-4xl font-bold text-primary text-center mb-8">Game Over!</h1>
 
           <div className="space-y-4 mb-8">
             {players.map((player, index) => (
               <div
                 key={player.id}
                 className={`flex items-center justify-between p-4 rounded-xl ${
-                  index === 0 ? 'bg-gradient-to-r from-pink-300 to-rose-300 border-2 border-rose-500' : 'bg-pink-100'
-                } ${player.player_id === playerId ? 'ring-2 ring-rose-500' : ''}`}
+                  index === 0 ? 'bg-primary/20 border border-primary' : 'bg-glass'
+                } ${player.player_id === playerId ? 'ring-2 ring-ring' : ''}`}
               >
                 <div className="flex items-center gap-4">
-                  <span className="text-2xl font-bold text-rose-700">#{index + 1}</span>
-                  <span className="text-lg text-rose-900 font-medium">
+                  <span className="text-2xl font-bold text-primary">#{index + 1}</span>
+                  <span className="text-lg text-foreground font-medium">
                     {player.player_name}
-                    {player.player_id === playerId && ' 💕 (You)'}
+                    {player.player_id === playerId && ' (You)'}
                   </span>
                 </div>
-                <span className="text-2xl font-bold text-pink-600">{player.score} 💖</span>
+                <span className="text-2xl font-bold text-highlight">{player.score}</span>
               </div>
             ))}
           </div>
 
-          <div className="bg-rose-50 rounded-xl p-6 mb-6 border border-pink-300">
-            <h3 className="text-xl font-bold text-rose-700 mb-4">💕 Your Stats</h3>
+          <div className="bg-surface rounded-xl p-6 mb-6 border border-border">
+            <h3 className="text-xl font-bold text-foreground mb-4">Your Stats</h3>
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
-                <p className="text-2xl font-bold text-green-600">{correctCount}</p>
-                <p className="text-sm text-rose-600">Correct</p>
+                <p className="text-2xl font-bold text-success">{correctCount}</p>
+                <p className="text-sm text-muted">Correct</p>
               </div>
               <div>
-                <p className="text-2xl font-bold text-red-500">{incorrectCount}</p>
-                <p className="text-sm text-rose-600">Incorrect</p>
+                <p className="text-2xl font-bold text-error">{incorrectCount}</p>
+                <p className="text-sm text-muted">Incorrect</p>
               </div>
               <div>
-                <p className="text-2xl font-bold text-pink-600">
+                <p className="text-2xl font-bold text-highlight">
                   {((correctCount / (correctCount + incorrectCount)) * 100 || 0).toFixed(0)}%
                 </p>
-                <p className="text-sm text-rose-600">Accuracy</p>
+                <p className="text-sm text-muted">Accuracy</p>
               </div>
             </div>
           </div>
 
           <button
             onClick={() => window.location.href = '/'}
-            className="w-full bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white font-bold py-3 rounded-xl transition shadow-lg transform hover:scale-105"
+            className="w-full bg-primary hover:bg-primary-hover text-foreground font-bold py-3 rounded-xl transition shadow-lg hover:scale-105"
           >
-            💗 Back to Home
+            Back to Home
           </button>
         </div>
 
@@ -479,37 +479,37 @@ export default function GameScreen({ room: initialRoom, playerId }: Props) {
 
   if (!currentQuestion) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-200 via-rose-300 to-red-200 flex items-center justify-center p-4">
-        <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 max-w-md w-full text-center border-2 border-pink-300 shadow-xl">
-          <Heart className="w-16 h-16 text-rose-500 mx-auto mb-4 animate-pulse" />
-          <h2 className="text-2xl font-bold text-rose-700 mb-4">Loading... 💕</h2>
-          <p className="text-rose-600">Preparing your questions...</p>
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="bg-surface backdrop-blur-sm rounded-2xl p-8 max-w-md w-full text-center border border-border shadow-xl">
+          <Heart className="w-16 h-16 text-primary mx-auto mb-4 animate-pulse" />
+          <h2 className="text-2xl font-bold text-foreground mb-4">Loading...</h2>
+          <p className="text-muted">Preparing your questions...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-200 via-rose-300 to-red-200 p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-background p-4 relative overflow-hidden">
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-20 left-20 text-5xl opacity-15 animate-pulse">💕</div>
-        <div className="absolute top-40 right-32 text-3xl opacity-20 animate-bounce">💖</div>
-        <div className="absolute bottom-32 left-1/3 text-4xl opacity-15 animate-pulse">💗</div>
-        <div className="absolute bottom-20 right-1/4 text-3xl opacity-20">💝</div>
+        <div className="absolute top-20 left-20 text-5xl opacity-10 animate-pulse">✝️</div>
+        <div className="absolute top-40 right-32 text-3xl opacity-10 animate-bounce">📖</div>
+        <div className="absolute bottom-32 left-1/3 text-4xl opacity-10 animate-pulse">✨</div>
+        <div className="absolute bottom-20 right-1/4 text-3xl opacity-10">🕊️</div>
       </div>
 
       <div className="max-w-4xl mx-auto py-8 relative z-10">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <div className="bg-white/80 backdrop-blur-sm rounded-xl px-6 py-3 border-2 border-pink-300 shadow-lg">
-            <span className="text-rose-700 font-bold">
-              💕 Question {localRoom.current_question + 1} / {localRoom.question_count}
+          <div className="bg-surface backdrop-blur-sm rounded-xl px-6 py-3 border border-border shadow-lg">
+            <span className="text-foreground font-bold">
+              Question {localRoom.current_question + 1} / {localRoom.question_count}
             </span>
           </div>
 
-          <div className="bg-white/80 backdrop-blur-sm rounded-xl px-6 py-3 flex items-center gap-2 border-2 border-pink-300 shadow-lg">
-            <Heart className={`w-5 h-5 ${timeLeft <= 5 ? 'text-red-600 fill-red-600 animate-pulse' : 'text-pink-600 fill-pink-600'}`} />
-            <span className={`text-2xl font-bold ${timeLeft <= 5 ? 'text-red-600' : 'text-rose-700'}`}>
+          <div className="bg-surface backdrop-blur-sm rounded-xl px-6 py-3 flex items-center gap-2 border border-border shadow-lg">
+            <Heart className={`w-5 h-5 ${timeLeft <= 5 ? 'text-error fill-error animate-pulse' : 'text-primary fill-primary'}`} />
+            <span className={`text-2xl font-bold ${timeLeft <= 5 ? 'text-error' : 'text-foreground'}`}>
               {timeLeft}s
             </span>
           </div>
@@ -518,7 +518,7 @@ export default function GameScreen({ room: initialRoom, playerId }: Props) {
         {/* Status message after answering */}
         {hasAnswered && (
           <div className="text-center mb-4">
-            <span className="bg-white/80 backdrop-blur-sm rounded-xl px-6 py-2 text-rose-700 font-bold border-2 border-pink-300 shadow-lg inline-block">
+            <span className="bg-surface backdrop-blur-sm rounded-xl px-6 py-2 text-foreground font-bold border border-border shadow-lg inline-block">
               {nextQuestionIn
                 ? localRoom.current_question + 1 >= localRoom.question_count
                   ? `Game ending in ${nextQuestionIn}s...`
@@ -539,10 +539,10 @@ export default function GameScreen({ room: initialRoom, playerId }: Props) {
                   key={powerUp.key}
                   onClick={() => usePowerUp(powerUp.key)}
                   disabled={used}
-                  className={`flex flex-col items-center gap-1 px-4 py-3 rounded-xl transition border-2 shadow-lg ${
+                  className={`flex flex-col items-center gap-1 px-4 py-3 rounded-xl transition border shadow-lg ${
                     used
-                      ? 'bg-gray-300 border-gray-400 cursor-not-allowed opacity-50'
-                      : 'bg-gradient-to-br from-pink-400 to-rose-500 border-pink-300 hover:from-pink-500 hover:to-rose-600 transform hover:scale-105'
+                      ? 'bg-muted/30 border-border cursor-not-allowed opacity-50'
+                      : 'bg-primary border-ring hover:bg-primary-hover hover:scale-105'
                   }`}
                   title={powerUp.description}
                 >
@@ -555,8 +555,8 @@ export default function GameScreen({ room: initialRoom, playerId }: Props) {
         )}
 
         {/* Question */}
-        <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 mb-6 border-2 border-pink-300 shadow-xl">
-          <h2 className="text-2xl md:text-3xl font-bold text-rose-700 mb-8 text-center">
+        <div className="bg-surface backdrop-blur-sm rounded-2xl p-8 mb-6 border border-border shadow-xl">
+          <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-8 text-center">
             ✝️ {currentQuestion.question}
           </h2>
 
@@ -572,16 +572,16 @@ export default function GameScreen({ room: initialRoom, playerId }: Props) {
                     if (!hasAnswered) submitAnswer(index)
                   }}
                   disabled={hasAnswered}
-                  className={`p-6 rounded-xl text-left text-lg font-medium transition border-2 shadow-lg ${
+                  className={`p-6 rounded-xl text-left text-lg font-medium transition border shadow-lg ${
                     hasAnswered
                       ? selectedAnswer === index
                         ? index === currentQuestion.correct_index
-                          ? 'bg-gradient-to-r from-green-400 to-emerald-500 text-white border-green-500'
-                          : 'bg-gradient-to-r from-red-400 to-rose-500 text-white border-red-500'
+                          ? 'bg-success text-background border-success'
+                          : 'bg-error text-background border-error'
                         : index === currentQuestion.correct_index
-                        ? 'bg-gradient-to-r from-green-400 to-emerald-500 text-white border-green-500'
-                        : 'bg-pink-50 text-rose-400 border-pink-200'
-                      : 'bg-gradient-to-br from-pink-100 to-rose-100 hover:from-pink-200 hover:to-rose-200 text-rose-800 border-pink-300 hover:border-pink-400 transform hover:scale-105'
+                        ? 'bg-success text-background border-success'
+                        : 'bg-surface text-muted border-border'
+                      : 'bg-glass hover:bg-glass-hover text-foreground border-border hover:border-ring hover:scale-105'
                   } disabled:cursor-not-allowed`}
                 >
                   {option}

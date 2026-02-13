@@ -115,13 +115,13 @@ export default function LeaderboardPage() {
   const getRankIcon = (rank: number) => {
     switch (rank) {
       case 1:
-        return <Trophy className="w-8 h-8 text-yellow-400" />
+        return <Trophy className="w-8 h-8 text-highlight" />
       case 2:
-        return <Medal className="w-8 h-8 text-gray-300" />
+        return <Medal className="w-8 h-8 text-muted" />
       case 3:
-        return <Medal className="w-8 h-8 text-orange-400" />
+        return <Medal className="w-8 h-8 text-highlight" />
       default:
-        return <span className="text-xl font-bold text-white">#{rank}</span>
+        return <span className="text-xl font-bold text-foreground">#{rank}</span>
     }
   }
 
@@ -137,17 +137,17 @@ export default function LeaderboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 p-4">
+    <div className="min-h-screen bg-background p-4">
       <div className="max-w-4xl mx-auto py-8">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-4xl font-bold text-white flex items-center gap-3">
-            <Trophy className="w-10 h-10 text-yellow-400" />
+          <h1 className="text-4xl font-bold text-foreground flex items-center gap-3">
+            <Trophy className="w-10 h-10 text-highlight" />
             Leaderboard
           </h1>
           <button
             onClick={() => router.push('/')}
-            className="flex items-center gap-2 bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg text-white transition"
+            className="flex items-center gap-2 bg-glass hover:bg-glass-hover px-4 py-2 rounded-lg text-foreground transition"
           >
             <Home className="w-5 h-5" />
             Home
@@ -160,8 +160,8 @@ export default function LeaderboardPage() {
             onClick={() => setSelectedTab('wins')}
             className={`flex-1 py-3 rounded-lg font-semibold transition ${
               selectedTab === 'wins'
-                ? 'bg-yellow-500 text-gray-900'
-                : 'bg-white/10 text-white hover:bg-white/20'
+                ? 'bg-primary text-foreground'
+                : 'bg-glass text-foreground hover:bg-glass-hover'
             }`}
           >
             <Trophy className="w-5 h-5 inline-block mr-2" />
@@ -171,8 +171,8 @@ export default function LeaderboardPage() {
             onClick={() => setSelectedTab('accuracy')}
             className={`flex-1 py-3 rounded-lg font-semibold transition ${
               selectedTab === 'accuracy'
-                ? 'bg-green-500 text-white'
-                : 'bg-white/10 text-white hover:bg-white/20'
+                ? 'bg-primary text-foreground'
+                : 'bg-glass text-foreground hover:bg-glass-hover'
             }`}
           >
             <Award className="w-5 h-5 inline-block mr-2" />
@@ -182,8 +182,8 @@ export default function LeaderboardPage() {
             onClick={() => setSelectedTab('games')}
             className={`flex-1 py-3 rounded-lg font-semibold transition ${
               selectedTab === 'games'
-                ? 'bg-blue-500 text-white'
-                : 'bg-white/10 text-white hover:bg-white/20'
+                ? 'bg-primary text-foreground'
+                : 'bg-glass text-foreground hover:bg-glass-hover'
             }`}
           >
             <Zap className="w-5 h-5 inline-block mr-2" />
@@ -192,14 +192,14 @@ export default function LeaderboardPage() {
         </div>
 
         {/* Info Banner */}
-        <div className="bg-blue-500/20 border border-blue-400 rounded-lg p-4 mb-6">
-          <p className="text-white text-sm">
+        <div className="bg-glass border border-border rounded-lg p-4 mb-6">
+          <p className="text-foreground text-sm">
             <strong>Note:</strong> This is a local leaderboard. In the full version, this would show global rankings from all players.
           </p>
         </div>
 
         {/* Leaderboard */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
+        <div className="bg-glass backdrop-blur-sm rounded-lg p-6">
           <div className="space-y-3">
             {leaderboard.map((entry, index) => (
               <motion.div
@@ -209,10 +209,10 @@ export default function LeaderboardPage() {
                 transition={{ delay: index * 0.05 }}
                 className={`flex items-center justify-between p-4 rounded-lg ${
                   entry.isCurrentUser
-                    ? 'bg-blue-500/30 border-2 border-blue-400'
+                    ? 'bg-primary/20 border border-primary'
                     : entry.rank === 1
-                    ? 'bg-gradient-to-r from-yellow-500/30 to-orange-500/30 border-2 border-yellow-400'
-                    : 'bg-white/10'
+                    ? 'bg-highlight/20 border border-highlight/50'
+                    : 'bg-glass'
                 }`}
               >
                 <div className="flex items-center gap-4">
@@ -220,24 +220,24 @@ export default function LeaderboardPage() {
                     {getRankIcon(entry.rank)}
                   </div>
                   <div>
-                    <p className="font-bold text-white text-lg">
+                    <p className="font-bold text-foreground text-lg">
                       {entry.username}
                       {entry.isCurrentUser && (
-                        <span className="ml-2 text-xs bg-blue-500 px-2 py-1 rounded">YOU</span>
+                        <span className="ml-2 text-xs bg-primary px-2 py-1 rounded">YOU</span>
                       )}
                     </p>
-                    <p className="text-sm text-gray-300">
+                    <p className="text-sm text-muted">
                       {entry.totalGames} games • {entry.winRate}% win rate
                     </p>
                   </div>
                 </div>
 
                 <div className="text-right">
-                  <p className="text-2xl font-bold text-yellow-400">
+                  <p className="text-2xl font-bold text-highlight">
                     {getSortValue(entry)}
                     {selectedTab === 'accuracy' && '%'}
                   </p>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-muted">
                     {selectedTab === 'wins' && 'wins'}
                     {selectedTab === 'accuracy' && 'accuracy'}
                     {selectedTab === 'games' && 'games'}
@@ -250,28 +250,28 @@ export default function LeaderboardPage() {
 
         {/* Stats Summary */}
         {profile && (
-          <div className="mt-6 bg-white/10 backdrop-blur-sm rounded-lg p-6">
-            <h3 className="text-xl font-bold text-white mb-4">Your Global Stats</h3>
+          <div className="mt-6 bg-glass backdrop-blur-sm rounded-lg p-6">
+            <h3 className="text-xl font-bold text-foreground mb-4">Your Global Stats</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="text-center">
-                <p className="text-3xl font-bold text-yellow-400">{profile.totalWins}</p>
-                <p className="text-sm text-gray-300">Total Wins</p>
+                <p className="text-3xl font-bold text-highlight">{profile.totalWins}</p>
+                <p className="text-sm text-muted">Total Wins</p>
               </div>
               <div className="text-center">
-                <p className="text-3xl font-bold text-green-400">
+                <p className="text-3xl font-bold text-success">
                   {profile.totalQuestions > 0
                     ? Math.round((profile.totalCorrect / profile.totalQuestions) * 100)
                     : 0}%
                 </p>
-                <p className="text-sm text-gray-300">Accuracy</p>
+                <p className="text-sm text-muted">Accuracy</p>
               </div>
               <div className="text-center">
-                <p className="text-3xl font-bold text-blue-400">{profile.totalGames}</p>
-                <p className="text-sm text-gray-300">Games Played</p>
+                <p className="text-3xl font-bold text-soft">{profile.totalGames}</p>
+                <p className="text-sm text-muted">Games Played</p>
               </div>
               <div className="text-center">
-                <p className="text-3xl font-bold text-purple-400">{profile.bestStreak}</p>
-                <p className="text-sm text-gray-300">Best Streak</p>
+                <p className="text-3xl font-bold text-primary">{profile.bestStreak}</p>
+                <p className="text-sm text-muted">Best Streak</p>
               </div>
             </div>
           </div>

@@ -41,24 +41,24 @@ export default function AchievementToast({ achievementKey, onClose, delay = 0 }:
           initial={{ x: 400, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           exit={{ x: 400, opacity: 0 }}
-          className="bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg shadow-2xl p-4 w-80 relative"
+          className="bg-highlight rounded-lg shadow-2xl p-4 w-80 relative"
         >
           <button
             onClick={() => {
               setIsVisible(false)
               setTimeout(onClose, 300)
             }}
-            className="absolute top-2 right-2 text-white/70 hover:text-white"
+            className="absolute top-2 right-2 text-background/70 hover:text-background"
           >
             <X className="w-4 h-4" />
           </button>
 
           <div className="flex items-center gap-3">
-            <Award className="w-8 h-8 text-white" />
+            <Award className="w-8 h-8 text-background" />
             <div className="flex-1">
-              <p className="text-white font-bold text-sm">Achievement Unlocked!</p>
-              <p className="text-white text-lg font-bold">{achievement.icon} {achievement.name}</p>
-              <p className="text-white/90 text-xs">{achievement.description}</p>
+              <p className="text-background font-bold text-sm">Achievement Unlocked!</p>
+              <p className="text-background text-lg font-bold">{achievement.icon} {achievement.name}</p>
+              <p className="text-background/80 text-xs">{achievement.description}</p>
             </div>
           </div>
         </motion.div>
