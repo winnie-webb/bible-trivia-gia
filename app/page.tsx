@@ -189,20 +189,6 @@ function HomeContent() {
           )}
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-surface backdrop-blur-sm rounded-2xl p-4 text-center border border-border shadow-lg">
-            <Users className="mx-auto h-8 w-8 text-primary mb-2" />
-            <p className="text-foreground font-bold">Play Together</p>
-            <p className="text-muted text-sm">Up to 10 players</p>
-          </div>
-          <div className="bg-surface backdrop-blur-sm rounded-2xl p-4 text-center border border-border shadow-lg">
-            <Heart className="mx-auto h-8 w-8 text-primary fill-primary mb-2" />
-            <p className="text-foreground font-bold">Real-time Fun</p>
-            <p className="text-muted text-sm">Live scoring</p>
-          </div>
-        </div>
-
         {/* Player Name */}
         <div className="bg-surface backdrop-blur-sm rounded-2xl p-6 space-y-4 border border-border shadow-xl">
           <input

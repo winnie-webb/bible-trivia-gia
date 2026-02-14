@@ -5,28 +5,29 @@
    the entire app in one place.
    ═══════════════════════════════════════════════ */
 :root {
-  /* Core palette */
-  --background: #fff7f9;        /* soft blush white */
+  /* Core palette — Soft Lavender + Cream */
+  --background: #faf8fc;        /* lavender cream */
   --surface:    #ffffff;        /* cards */
-  --primary:    #e38aa4;        /* muted rose */
-  --primary-hover: #d96c8a;
-  --soft:       #ffe3ec;        /* very light pink */
-  --highlight:  #f6c7d6;        /* accent glow */
-  --foreground: #3a2e2e;        /* warm dark text */
-  --muted:      #8f7a7a;
+  --primary:    #9b7ec8;        /* soft lavender */
+  --primary-hover: #8466b5;
+  --soft:       #f0ebf7;        /* pale lilac */
+  --highlight:  #c4aee0;        /* light wisteria */
+  --foreground: #2e2938;        /* plum-ink */
+  --muted:      #8a8296;        /* dusty violet gray */
 
   /* Semantic */
-  --success: #6fcf97;
-  --error:   #eb6a6a;
+  --success: #6abf7b;
+  --error:   #d46a6a;
 
   /* Glass */
-  --glass:       rgba(255, 255, 255, 0.6);
-  --glass-hover: rgba(255, 255, 255, 0.8);
+  --glass:       rgba(255, 255, 255, 0.65);
+  --glass-hover: rgba(255, 255, 255, 0.85);
 
   /* Borders */
-  --border: rgba(227, 138, 164, 0.25);
-  --ring:   rgba(227, 138, 164, 0.45);
+  --border: rgba(155, 126, 200, 0.2);
+  --ring:   rgba(155, 126, 200, 0.4);
 }
+
 
 
 
