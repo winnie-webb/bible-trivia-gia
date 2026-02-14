@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase, Room, RoomPlayer } from '@/lib/supabase'
 import { Users, Settings, Play, Copy, Check, Heart, Sparkles } from 'lucide-react'
@@ -22,6 +22,7 @@ export default function RoomPage() {
   const [initialLoading, setInitialLoading] = useState(true)
 
   const isOwner = room?.owner_id === playerId
+  const isUpdatingRef = useRef(false)
 
   useEffect(() => {
     const id = localStorage.getItem('playerId')
@@ -36,23 +37,43 @@ export default function RoomPage() {
   useEffect(() => {
     if (!room) return
 
-    // Subscribe to room changes
-    const roomChannel = supabase
-      .channel(`room:${room.id}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'rooms', filter: `id=eq.${room.id}` }, (payload) => {
-        setRoom(payload.new as Room)
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'room_players', filter: `room_id=eq.${room.id}` }, () => {
-        loadPlayers()
-      })
-      .subscribe()
+    // Poll for room and player changes every 1 second
+    const pollInterval = setInterval(() => {
+      pollRoom()
+      pollPlayers()
+    }, 1000)
 
-    loadPlayers()
+    // Initial load of players
+    pollPlayers()
 
     return () => {
-      supabase.removeChannel(roomChannel)
+      clearInterval(pollInterval)
     }
   }, [room?.id])
+
+  const pollRoom = async () => {
+    if (!code || isUpdatingRef.current) return
+
+    const { data } = await supabase
+      .from('rooms')
+      .select('*')
+      .eq('code', code)
+      .single()
+
+    if (data) setRoom(data)
+  }
+
+  const pollPlayers = async () => {
+    if (!room) return
+
+    const { data } = await supabase
+      .from('room_players')
+      .select('*')
+      .eq('room_id', room.id)
+      .order('joined_at', { ascending: true })
+
+    if (data) setPlayers(data)
+  }
 
   const loadRoom = async () => {
     console.log('Loading room with code:', code)
@@ -76,25 +97,27 @@ export default function RoomPage() {
     setInitialLoading(false)
   }
 
-  const loadPlayers = async () => {
-    if (!room) return
-
-    const { data } = await supabase
-      .from('room_players')
-      .select('*')
-      .eq('room_id', room.id)
-      .order('joined_at', { ascending: true })
-
-    if (data) setPlayers(data)
-  }
-
   const updateSettings = async (field: string, value: any) => {
     if (!isOwner || !room) return
 
-    await supabase
+    // Optimistically update local state so the UI responds immediately
+    setRoom({ ...room, [field]: value })
+    isUpdatingRef.current = true
+
+    const { error } = await supabase
       .from('rooms')
       .update({ [field]: value })
       .eq('id', room.id)
+
+    if (error) {
+      console.error('Failed to update setting:', error)
+      // Revert optimistic update on failure
+      setRoom(room)
+    }
+
+    // Small buffer to let DB propagate before resuming polling
+    await new Promise(r => setTimeout(r, 500))
+    isUpdatingRef.current = false
   }
 
   const toggleReady = async () => {

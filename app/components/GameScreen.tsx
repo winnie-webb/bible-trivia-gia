@@ -53,7 +53,7 @@ export default function GameScreen({ room: initialRoom, playerId }: Props) {
     loadPlayers()
   }, [])
 
-  // ── Poll room state every 2 seconds ──
+  // ── Poll room state every 1 second ──
   useEffect(() => {
     const poll = setInterval(async () => {
       // Fetch latest room
@@ -102,7 +102,7 @@ export default function GameScreen({ room: initialRoom, playerId }: Props) {
           doAdvance(room)
         }
       }
-    }, 2000)
+    }, 1000)
 
     return () => clearInterval(poll)
   }, [])
