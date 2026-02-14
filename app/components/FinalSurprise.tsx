@@ -26,7 +26,7 @@ function generateRisingHearts(count: number) {
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function FinalSurprise({
-  message = "Happy Valentine's ❤️\nYou're my everything.",
+  message = "Happy Valentine's ❤️\n Munckinopumpkinpie. Oh and also stop giggling so much or else your cheeks are gonna hurt 😁",
 }: {
   message?: string
 }) {

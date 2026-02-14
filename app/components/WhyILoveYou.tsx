@@ -12,14 +12,16 @@ const PAPER_GRAIN =
 // ─── Data ────────────────────────────────────────────────────────────────────
 
 const DEFAULT_REASONS = [
-  { text: 'I love your laugh — it fills every room with warmth', icon: Sun },
+  { text: 'I love your laugh — it fills my soul with warmth', icon: Sun },
   { text: 'I love how you support me through every storm', icon: Heart },
-  { text: 'I love your heart for God and how you inspire my faith', icon: Sparkles },
-  { text: 'I love being with you — even silence feels like home', icon: Coffee },
-  { text: 'I love how you see the best in everyone', icon: Star },
-  { text: 'I love every single day the Lord gives us together', icon: Heart },
-  { text: 'I love the way you pray for us', icon: Sparkles },
-  { text: 'I love that you are mine and I am yours', icon: Music },
+    { text: 'I love the way you pray for us', icon: Sparkles },
+  { text: 'I love how feminine and girly you are', icon: Coffee },
+  { text: 'I love how hard-working you are — your dedication makes me want to be better', icon: Star },
+  { text: 'I love seeing your growth — the way you have learnt to deny yourself for my sake', icon: Heart },
+    { text: 'I love how beautiful and modest you are', icon: Music },
+
+  { text: 'I love how you love God — your faith inspires me', icon: Sparkles },
+
 ]
 
 // ─── Component ───────────────────────────────────────────────────────────────

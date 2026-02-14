@@ -29,23 +29,23 @@ const DEFAULT_MEMORIES: Memory[] = [
     date: 'A day I\'ll never forget',
   },
   {
-    title: 'When We Became Official',
+    title: 'When We Became Official-Official',
     message:
       'The day we made a covenant in our hearts — to be each other\'s. No more wondering, no more maybe. Just us, committed, with God at the center of it all.',
-    emoji: '💑',
+    emoji: '🤞💕',
     date: 'The best yes',
   },
   {
     title: 'When We Said "I Love You"',
     message:
-      'Three words that changed everything. My heart was beating so fast, but the moment those words left our lips, everything felt right. Like it was always meant to be said.',
+      'Three words that changed everything. My heart was beating so fast, but the moment those words left my lips... I love you... I really do. Everything felt right. Like it was always meant to be said.',
     emoji: '❤️',
     date: 'Written on my heart',
   },
   {
     title: 'Our Birthdays Together',
     message:
-      'Celebrating the day God brought you into this world — there\'s no greater gift He could have given me. Every birthday with you is a reminder of His faithfulness.',
+      'The night when I opened the box is definitely up there as one of the best moments of my life. I cannot wait to celebrate many more birthdays together.',
     emoji: '🎂',
     date: 'Our favourite celebrations',
   },
