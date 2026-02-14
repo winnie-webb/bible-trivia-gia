@@ -144,6 +144,8 @@ export default function GameScreen({ room: initialRoom, playerId }: Props) {
         console.log('Timer expired → auto-submit')
         hasAnsweredRef.current = true
         setHasAnswered(true)
+        setIncorrectCount(prev => prev + 1)
+        updateStreak(false)
         doAutoSubmit()
       }
     }, 1000)
