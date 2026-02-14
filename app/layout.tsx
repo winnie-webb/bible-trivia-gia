@@ -17,6 +17,9 @@ const playfair = Playfair_Display({
 export const metadata: Metadata = {
   title: 'Gia Trivia ✝️',
   description: 'Test your biblical knowledge with friends!',
+  icons: {
+    icon: '/favicon.svg',
+  },
 }
 
 export default function RootLayout({
