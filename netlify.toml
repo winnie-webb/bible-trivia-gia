@@ -5,3 +5,5 @@
 
 [build.environment]
   NODE_VERSION = "22"
+  # the site was first set up for the Next.js trivia app; its Next.js plugin must not run here
+  NETLIFY_NEXT_PLUGIN_SKIP = "true"
