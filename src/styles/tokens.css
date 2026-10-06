@@ -1,0 +1,58 @@
+/* =====================================================================
+   DESIGN TOKENS — palette, type, motion.
+   Change the feel of the whole experience from here.
+   ===================================================================== */
+:root {
+  /* palette — light: warm ivory, soft white, blush, restrained gold */
+  --black: #fbf6ef; /* page background (kept as --black so every surface follows) */
+  --paper: #fffdf9;
+  --ink: #2b211c; /* warm near-black for text */
+  --ink-dim: rgba(43, 33, 28, 0.7);
+  --ink-faint: rgba(43, 33, 28, 0.46);
+  --ink-ghost: rgba(43, 33, 28, 0.14);
+  --gold: #9a7440; /* restrained gold, readable on ivory */
+  --gold-soft: #8a6636;
+  --gold-glow: rgba(201, 160, 99, 0.45);
+  --burgundy: #7a2e3a;
+  --blush: #e6b8ae;
+  --blush-soft: #f6e1dc;
+  --shadow: rgba(92, 62, 40, 0.16);
+
+  /* type families */
+  --serif: 'Cormorant Garamond', 'Cormorant', 'Iowan Old Style', Georgia, serif;
+  --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+
+  /* type scale — sized for a phone held upright, grows gently on larger screens */
+  --t-caps: 0.68rem; /* small caps labels, dates */
+  --t-whisper: clamp(1.15rem, 4.6vw, 1.4rem); /* whispered thoughts */
+  --t-body: clamp(1.2rem, 5.1vw, 1.45rem); /* narrative paragraphs */
+  --t-line: clamp(1.75rem, 7.8vw, 2.5rem); /* single spoken lines */
+  --t-reflection: clamp(1.95rem, 8.6vw, 2.8rem); /* reflections given room */
+  --t-title: clamp(2.3rem, 10.5vw, 3.6rem); /* memory titles */
+  --t-huge: clamp(7rem, 44vw, 15rem); /* "20." */
+
+  --caps-track: 0.34em;
+
+  /* motion */
+  --e-in: cubic-bezier(0.16, 0.84, 0.3, 1);
+  --e-out: cubic-bezier(0.5, 0, 0.75, 0);
+  --e-inout: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* layout */
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+  --gutter: 28px;
+  --vh: 1vh;
+}
+
+@media (max-height: 700px) {
+  :root {
+    --t-line: clamp(1.55rem, 7vw, 2.1rem);
+    --t-reflection: clamp(1.7rem, 7.6vw, 2.3rem);
+    --t-title: clamp(2rem, 9.4vw, 3rem);
+    --t-huge: clamp(6rem, 38vw, 12rem);
+    --gutter: 24px;
+  }
+}
