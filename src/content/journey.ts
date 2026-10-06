@@ -82,7 +82,7 @@ export const stops: Stop[] = [
         layout: 'fan',
         kicker: 'February 14, 2026',
         title: 'Valentine’s',
-        caption: 'A letter for my Valentine, sent with love across the miles.',
+        caption: 'I made you a Valentine’s app: an old-English letter, games and Bible trivia.',
         media: [M.valLetter, M.valFlowers, M.valChocolates],
         drafted: true,
       },

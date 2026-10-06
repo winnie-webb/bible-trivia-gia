@@ -14,7 +14,7 @@ Your files sit directly in `public/assets/`, and `manifest.ts` points at them by
 
 - Stop 1: `bday2025recap.mp4`
 - Stop 2: `melissa.jpeg` (the hurricane), `christmas-dinner.jpeg`
-- Stop 3: `valentine.jpeg` (the letter; the flowers and chocolates photos are optional extras)
+- Stop 3: `valentine.jpeg` (the letter inside the Valentine's app you made; the flowers and chocolates photos are optional extras)
 - Stop 4: `makeup-1.jpeg`, `makeup-2.jpeg`, `gala-look.jpeg`, `rising-star.jpeg`, and `grades-4-0.jpg` (cropped from `4.0.jpeg` to Spring 2026 only)
 - Stop 5: `sign-language.mp4`, `nails.jpeg` (the skipping-rope photo was removed)
 - Stop 6: `lintons.jpeg`
