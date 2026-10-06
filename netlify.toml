@@ -1,0 +1,7 @@
+# Chapter 20 is a static Vite site (this repo used to hold a Next.js app)
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
